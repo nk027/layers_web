@@ -2,8 +2,6 @@
 layout: default
 ---
 
-# About
-
 In the project *Layers of Natural Resource Extraction*, we develop and apply new methods to assess the impacts of resource extraction. New Bayesian methods allow us to better capture and analyze the economic, environmental and social layers of these impacts, and help us better understand the interconnections between them and across time and space.
 
 # Publications
@@ -26,12 +24,7 @@ Kuschnig, N., Vashold, L., Soterroni, A., and Obersteiner, M. (2023). Eroding re
 
 # Get in touch
 
-Nikolas Kuschnig (<nikolas.kuschnig@wu.ac.at>)
-
-Vienna University of Economics and Business (WU)
-
-Institute for Ecological Economics
-
-Welthandelsplatz 1
-
+Nikolas Kuschnig (<nikolas.kuschnig@wu.ac.at>) <br>
+Vienna University of Economics and Business (WU) <br>
+Welthandelsplatz 1 <br>
 1020 Vienna, Austria
