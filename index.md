@@ -10,12 +10,12 @@ Kuschnig, N., Vashold, L., Soterroni, A., and Obersteiner, M. (2023). Eroding re
 
 # Team
 
-- [Stefan Giljum | Principal Investigator](https://www.wu.ac.at/ecolecon/institute/team/sgiljum/)
-- [Nikolas Kuschnig | Principal Investigator](https://kuschnig.eu)
-- [Sebastian Luckeneder | Researcher](https://www.wu.ac.at/ecolecon/institute/team/luckeneder-sebastian-ba-bsc/)
-- [Lukas Vashold | Researcher](https://www.wu.ac.at/en/economics/people/vashold-l/)
-- Maximilian Heinze | Research Assistant
-- Philipp Sepin | Research Assistant
+- [Stefan Giljum](https://www.wu.ac.at/ecolecon/institute/team/sgiljum/) – Principal Investigator
+- [Nikolas Kuschnig](https://kuschnig.eu) – Principal Investigator
+- [Sebastian Luckeneder](https://www.wu.ac.at/ecolecon/institute/team/luckeneder-sebastian-ba-bsc/) – Researcher
+- [Lukas Vashold](https://www.wu.ac.at/en/economics/people/vashold-l/) – Researcher
+- Maximilian Heinze – Research Assistant
+- Philipp Sepin – Research Assistant
 
 # Get in touch
 
