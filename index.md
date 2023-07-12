@@ -6,7 +6,7 @@ In the project *Layers of Natural Resource Extraction*, we develop and apply new
 
 # Publications
 
-Kuschnig, N., Vashold, L., Soterroni, A., and Obersteiner, M. (2023). Eroding resilience of deforestation interventions — evidence from Brazil’s lost decade. *Environmental Research Letters*, <b>18</b>:074039, DOI: [10.1088/1748-9326/acdfe7](https://doi.org/10.1088/1748-9326/acdfe7).
+Kuschnig, N., Vashold, L., Soterroni, A., and Obersteiner, M. (2023). Eroding resilience of deforestation interventions — evidence from Brazil’s lost decade. *Environmental Research Letters*, <b>18</b>(7):074039, DOI: [10.1088/1748-9326/acdfe7](https://doi.org/10.1088/1748-9326/acdfe7).
 
 # Team
 
