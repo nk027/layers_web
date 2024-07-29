@@ -31,7 +31,7 @@ Kuschnig, N., Vashold, L.: Man Eats Forest – Agricultural Demand and Amazon De
 
 - Meeting of the *European Economic Association* (EEA-ESEM), 08/2024
 - Annual Conference of the *European Association of Environmental and Resource Economists* (EAERE), 07/2024
-- *Association of Environmental and Resource Economists *(AERE) Summer Meeting, 05/2024
+- *Association of Environmental and Resource Economists* (AERE) Summer Meeting, 05/2024
 - *German Development Economics* (GDE) Conference 05/2024
 - Conference on *Environmental Economics* (EENR), 04/2024
 - *Royal Economic Society* (RES) Annual Conference, 03/2024
