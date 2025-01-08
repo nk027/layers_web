@@ -5,7 +5,7 @@
     <title>Mapping Mining Areas in the Tropics from 2016–2024</title>
     <meta charset='utf-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
     <style>
         body {
@@ -28,14 +28,16 @@
             padding: 2px;
             border-radius: 4px;
         }
-        #title > h3 {
-          margin: 4px;
+
+        #title>h3 {
+            margin: 4px;
         }
-        #title > h3 > a {
-          color: black;
-          text-decoration: none;
+
+        #title>h3>a {
+            color: black;
+            text-decoration: none;
         }
-        
+
         #controls {
             position: absolute;
             top: 10px;
@@ -44,6 +46,10 @@
             background: white;
             padding: 10px;
             border-radius: 4px;
+        }
+
+        .maplibregl-popup-content>p {
+            margin: 0;
         }
 
         .control-group {
@@ -59,12 +65,12 @@
 <body>
     <div id="map"></div>
     <div id="title">
-      <h3><a href = "https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Mapping Mining Areas in the Tropics from 2016–2024</a></h3>
+        <h3><a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Mapping Mining Areas in the Tropics from 2016–2024</a></h3>
     </div>
     <div id="controls">
         <div class="control-group">
             <h5>Basemap</h5>
-            <div id="baseMapControls"></div>  
+            <div id="baseMapControls"></div>
         </div>
         <div class="control-group">
             <h5>Mine polygons</h5>
@@ -75,26 +81,69 @@
     <script>
         const years_polygons = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
         const years_basemap = [2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
-        const defaultYear = '2023';
+        const defaultYear = 2023;
+        const colors = [
+            '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#d9d9d9'
+        ];
+        function getColor(year) {
+            const index = year - 2016;
+            return colors[Math.min(index, colors.length - 1)];
+        }
 
         // Generate radio buttons for basemap
         const baseMapControls = document.getElementById('baseMapControls');
-        // Add radio button for the reactive default
-        const defaultBaseMap = document.createElement('div');
-        defaultBaseMap.innerHTML = `
-            <input type="radio" id="baseReactive" name="baseMap" value="2016–2023" checked="">
-            <label for="baseReactive">Reactive</label>
+        // Add radio button for the reactive default vs. single years
+        baseMapControls.innerHTML = `
+            <div>
+                <input type="radio" id="baseReactive" name="baseMap" value="${defaultYear}" checked>
+                <label id="reactiveLabel" for="baseReactive">2016-2023</label>
+            </div>
+            <div>
+                <input type="radio" id="baseYear" name="baseMap" value="${defaultYear}">
+                <label for="baseYear">Fixed:</label>
+                <select id="yearSelect" name="yearSelect">
+                    ${years_basemap.map(year =>
+                        `<option value="${year}" ${year === defaultYear ? 'selected' : ''}>${year}</option>`
+                    ).join('')}
+                </select>
+            </div>
         `;
-        baseMapControls.appendChild(defaultBaseMap);
-        // Separate years
-        years_basemap.forEach(year => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <input type="radio" id="base${year}" name="baseMap" value="${year}"}>
-                <label for="base${year}">${year}</label>
-            `;
-            baseMapControls.appendChild(div);
+
+        // Update the radio based on the dropdowns value
+        document.getElementById('yearSelect').addEventListener('change', (e) => {
+            document.getElementById('baseYear').value = e.target.value;
         });
+        document.querySelectorAll('input[name="baseMap"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const year = e.target.value;
+                const source = map.getSource('s2maps');
+
+                if (source) {
+                    if (year == 2016) { // 2016 doesn't follow the naming convention
+                        source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                    } else {
+                        source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                    }
+                }
+            });
+        });
+
+
+        // const defaultBaseMap = document.createElement('div');
+        // defaultBaseMap.innerHTML = `
+        //     <input type="radio" id="baseReactive" name="baseMap" value="2016–2023" checked="">
+        //     <label id="reactiveLabel" for="baseReactive">2016–2023</label>
+        // `;
+        // baseMapControls.appendChild(defaultBaseMap);
+        // // Separate years
+        // years_basemap.forEach(year => {
+        //     const div = document.createElement('div');
+        //     div.innerHTML = `
+        //     <input type="radio" id="base${year}" name="baseMap" value="${year}"}>
+        //     <label for="base${year}">${year}</label>
+        // `;
+        //     baseMapControls.appendChild(div);
+        // });
 
         // Generate checkboxes for WMS layers
         const wmsControls = document.getElementById('wmsControls');
@@ -119,25 +168,6 @@
                         ],
                         'tileSize': 256,
                         'attribution': '<a href = "https://s2maps.eu/">Sentinel-2 cloudless - https://s2maps.eu</a> by <a href = "https://eox.at/">EOX IT Services GmbH<a/>'
-                    },
-                    [`geoserver-${defaultYear}`]: {
-                        'type': 'raster',
-                        'tiles': [
-                            'https://vps.fineprint.global/gs/geoserver/oenb/wms?' +
-                            'SERVICE=WMS&' +
-                            'VERSION=1.1.1&' +
-                            'REQUEST=GetMap&' +
-                            'FORMAT=image/png8&' +
-                            'TRANSPARENT=true&' +
-                            'LAYERS=oenb:mine-predictions-v0&' +
-                            'WIDTH=256&' +
-                            'HEIGHT=256&' +
-                            'SRS=EPSG:3857&' +
-                            'BBOX={bbox-epsg-3857}&' +
-                            'CQL_FILTER=year=' + defaultYear
-                          ],
-                      'tileSize': 256,
-                      'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
                     }
                 },
                 layers: [{
@@ -145,31 +175,103 @@
                     'type': 'raster',
                     'source': 's2maps',
                     'minzoom': 1,
-                    'maxzoom': 19
-                  }, {
-                    id: `polygon-${defaultYear}`,
-                    type: 'raster',
-                    source: `geoserver-${defaultYear}`,
-                    paint: {'raster-opacity': 1}
+                    'maxzoom': 20
                 }]
             },
             center: [0, 0],
-            zoom: 3
+            zoom: 2
         });
 
-        // Handle basemap year changes
-        document.querySelectorAll('input[name="baseMap"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const year = e.target.value;
-                const source = map.getSource('s2maps');
-                
-                if (source) {
-                  if (year == 2016) { // Name doesn't follow the convention
-                    source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                  } else {
-                    source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                  }
+        // Add the polygons next
+        map.on("load", () => {
+            // WMS for low zoom
+            map.addSource(`geoserver-${defaultYear}`, {
+                'type': 'raster',
+                'tiles': [
+                    'https://vps.fineprint.global/gs/geoserver/oenb/wms?' +
+                    'SERVICE=WMS&' +
+                    'VERSION=1.1.1&' +
+                    'REQUEST=GetMap&' +
+                    'FORMAT=image/png8&' +
+                    'TRANSPARENT=true&' +
+                    'LAYERS=oenb:mine-predictions-v0&' +
+                    'WIDTH=256&' +
+                    'HEIGHT=256&' +
+                    'SRS=EPSG:3857&' +
+                    'BBOX={bbox-epsg-3857}&' +
+                    'CQL_FILTER=year=' + defaultYear
+                ],
+                'tileSize': 256,
+                'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
+            });
+            map.addLayer({
+                'id': `polygon-${defaultYear}`,
+                'type': 'raster',
+                'source': `geoserver-${defaultYear}`,
+                'minzoom': 1,
+                'maxzoom': 5,
+                'paint': { 'raster-opacity': 1 }
+            });
+
+            // WFS for higher zoom
+            map.addSource(`geoserver-wfs-${defaultYear}`, {
+                'type': 'geojson',
+                'data': `https://vps.fineprint.global/gs/geoserver/oenb/wfs?` +
+                    'service=WFS&' +
+                    'version=2.0.0&' +
+                    'request=GetFeature&' +
+                    'typeName=oenb:mine-predictions-v0&' +
+                    'outputFormat=application/json&' +
+                    `CQL_FILTER=year=${defaultYear}`,
+                'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
+            });
+            map.addLayer({
+                'id': `polygon-line-${defaultYear}`,
+                'type': 'line',
+                'source': `geoserver-wfs-${defaultYear}`,
+                'minzoom': 5,
+                'maxzoom': 20,
+                'paint': {
+                    'line-color': '#FFFFFF',
+                    'line-width': 1,
+                    'line-opacity': 1
                 }
+            });
+            map.addLayer({
+                'id': `polygon-fill-${defaultYear}`,
+                'type': 'fill',
+                'source': `geoserver-wfs-${defaultYear}`,
+                'minzoom': 5,
+                'maxzoom': 20,
+                'paint': {
+                    'fill-color': getColor(defaultYear),
+                    'fill-opacity': 0.25
+                }
+            });
+
+            map.on('click', `polygon-fill-${defaultYear}`, (e) => {
+                const feature = e.features[0];
+                const props = feature.properties;
+                const coords = [e.lngLat.lng, e.lngLat.lat];
+                const content = `
+                    <p>Country: ${props.country_name}</p>
+                    <p>Year: ${props.year}</p>
+                    <p>Area: ${(props.area / 1_000_000)?.toFixed(2)} km²</p>
+                    <p>Lon/Lat: ${e.lngLat.lng?.toFixed(2)}, ${e.lngLat.lat?.toFixed(2)}</p>
+                `;
+                new maplibregl.Popup()
+                    .setLngLat(coords)
+                    .setHTML(content)
+                    .addTo(map);
+            });
+            // Change the cursor to a pointer when the mouse is over the places layer.
+            map.on('mouseenter', `polygon-fill-${defaultYear}`, () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', `polygon-fill-${defaultYear}`, () => {
+                map.getCanvas().style.cursor = '';
             });
         });
 
@@ -177,21 +279,19 @@
         document.querySelectorAll('[id^="wms"]').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const year = e.target.value;
-                const source = map.getSource('geoserver');
+                const layerId = `polygon-${year}`;
+                const sourceId = `geoserver-${year}`;
 
-                const layerId = `geoserver-${year}`;
-                const sourceId = `polygon-${year}`;
-                
+                // Also adjust the basemap, if not fixed
                 const sourceBasemap = map.getSource('s2maps');
                 const currentBasemap = document.querySelector('input[name="baseMap"]:checked').id;
 
                 if (e.target.checked) {
-                    // Add source and layer if they don't exist
-                    if (!map.getLayer(layerId)) {
-                        if (!map.getSource(sourceId)) {
-                          map.addSource(sourceId, {
-                            type: 'raster',
-                            tiles: [
+                    // Add sources if they don't exist
+                    if (!map.getSource(sourceId)) {
+                        map.addSource(sourceId, {
+                            'type': 'raster',
+                            'tiles': [
                                 'https://vps.fineprint.global/gs/geoserver/oenb/wms?' +
                                 'SERVICE=WMS&' +
                                 'VERSION=1.1.1&' +
@@ -203,40 +303,103 @@
                                 'HEIGHT=256&' +
                                 'SRS=EPSG:3857&' +
                                 'BBOX={bbox-epsg-3857}&' +
-                                'CQL_FILTER=year=' + year
+                                `CQL_FILTER=year=${year}`,
                             ],
-                            tileSize: 256,
-                            attribution: 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
+                            'tileSize': 256,
+                            'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
                         });
-                      }
+                        map.addSource(`geoserver-wfs-${year}`, {
+                            'type': 'geojson',
+                            'data': `https://vps.fineprint.global/gs/geoserver/oenb/wfs?` +
+                                'service=WFS&' +
+                                'version=2.0.0&' +
+                                'request=GetFeature&' +
+                                'typeName=oenb:mine-predictions-v0&' +
+                                'outputFormat=application/json&' +
+                                `CQL_FILTER=year=${year}`,
+                            'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
+                        });
+                    }
+                    // Add layers if they don't exist
+                    if (!map.getLayer(layerId)) {
                         map.addLayer({
-                            id: layerId,
-                            type: 'raster',
-                            source: sourceId,
-                            paint: {
-                                'raster-opacity': 1
+                            'id': layerId,
+                            'type': 'raster',
+                            'source': sourceId,
+                            'minzoom': 1,
+                            'maxzoom': 5,
+                            'paint': { 'raster-opacity': 1 }
+                        });
+
+                        map.addLayer({
+                            'id': `polygon-line-${year}`,
+                            'type': 'line',
+                            'source': `geoserver-wfs-${year}`,
+                            'minzoom': 5,
+                            'maxzoom': 20,
+                            'paint': {
+                                'line-color': "#FFFFFF",
+                                'line-width': 1,
+                                'line-opacity': 1
                             }
                         });
-                        
-                      // Also update the basemap
-                      if (currentBasemap === 'baseReactive' && sourceBasemap) {
-                        if (year == 2016) { // Name doesn't follow the convention
-                          sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        } else if(year == 2024) {
-                          sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-2023_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                        map.addLayer({
+                            'id': `polygon-fill-${year}`,
+                            'type': 'fill',
+                            'source': `geoserver-wfs-${year}`,
+                            'minzoom': 5,
+                            'maxzoom': 20,
+                            'paint': {
+                                'fill-color': getColor(year),
+                                'fill-opacity': 0.25
+                            }
+                        });
+
+                        // Add the listener
+                        map.on('click', `polygon-fill-${year}`, (e) => {
+                            const feature = e.features[0];
+                            const props = feature.properties;
+                            const coords = [e.lngLat.lng, e.lngLat.lat];
+                            const content = `
+                                <p>Country: ${props.country_name}</p>
+                                <p>Year: ${props.year}</p>
+                                <p>Area: ${(props.area / 1_000_000)?.toFixed(2)} km²</p>
+                                <p>Lon/Lat: ${e.lngLat.lng?.toFixed(2)}, ${e.lngLat.lat?.toFixed(2)}</p>
+                            `;
+                            new maplibregl.Popup()
+                                .setLngLat(coords)
+                                .setHTML(content)
+                                .addTo(map);
+                        });
+                        // Change the cursor to a pointer when the mouse is over the places layer.
+                        map.on('mouseenter', `polygon-fill-${year}`, () => {
+                            map.getCanvas().style.cursor = 'pointer';
+                        });
+
+                        // Change it back to a pointer when it leaves.
+                        map.on('mouseleave', `polygon-fill-${year}`, () => {
+                            map.getCanvas().style.cursor = '';
+                        });
+                    }
+                    // Update the basemap if it isn't fixed
+                    if (currentBasemap === 'baseReactive' && sourceBasemap) {
+                        // Update the value if there's radio toggling
+                        document.getElementById('baseReactive').value = e.target.value;
+                        if (year == 2016) { // 2016 doesn't follow the naming convention
+                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                        } else if (year == 2024) { // There is no 2024 basemap yet
+                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-2023_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
                         } else {
-                          sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
                         }
-                      }
                     }
                 } else {
-                    // Remove layer and source if they exist
-                    if (map.getLayer(layerId)) {
+                    // Remove the layers if they exist
+                    if(map.getLayer(layerId)) {
                         map.removeLayer(layerId);
+                        map.removeLayer(`polygon-line-${year}`);
+                        map.removeLayer(`polygon-fill-${year}`);
                     }
-                    // if (map.getSource(sourceId)) {
-                    //     map.removeSource(sourceId);
-                    // }
                 }
             });
         });
