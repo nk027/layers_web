@@ -4,3 +4,4 @@ plugins:
 show_downloads: false
 title: Layers
 description: Modelling "Layers of Natural Resource Extraction"
+maptiler_key: MAPTILER_KEY_PLACEHOLDER
