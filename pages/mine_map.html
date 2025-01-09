@@ -65,7 +65,8 @@
 <body>
     <div id="map"></div>
     <div id="title">
-        <h3><a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Mapping Mining Areas in the Tropics from 2016–2024</a></h3>
+        <h3><a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Mapping Mining Areas in the Tropics from
+                2016–2024</a></h3>
     </div>
     <div id="controls">
         <div class="control-group">
@@ -96,16 +97,24 @@
         baseMapControls.innerHTML = `
             <div>
                 <input type="radio" id="baseReactive" name="baseMap" value="${defaultYear}" checked>
-                <label id="reactiveLabel" for="baseReactive">2016-2023</label>
+                <label for="baseReactive">2016-2023</label>
             </div>
             <div>
                 <input type="radio" id="baseYear" name="baseMap" value="${defaultYear}">
                 <label for="baseYear">Fixed:</label>
                 <select id="yearSelect" name="yearSelect">
                     ${years_basemap.map(year =>
-                        `<option value="${year}" ${year === defaultYear ? 'selected' : ''}>${year}</option>`
-                    ).join('')}
+            `<option value="${year}" ${year === defaultYear ? 'selected' : ''}>${year}</option>`
+        ).join('')}
                 </select>
+            </div>
+            <div>
+                <input type="radio" id="baseThunder" name="baseMap" value="0">
+                <label for="baseOSM">Thunderforest</label>
+            </div>
+            <div>
+                <input type="radio" id="baseOSM" name="baseMap" value="1">
+                <label for="baseOSM">OpenStreetMap</label>
             </div>
         `;
 
@@ -119,15 +128,72 @@
                 const source = map.getSource('s2maps');
 
                 if (source) {
-                    if (year == 2016) { // 2016 doesn't follow the naming convention
+                    if (year == 0) {
+                        if (!map.getSource('osm')) {
+                            map.addSource('osm', {
+                                'type': 'raster',
+                                'tiles': [
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                ],
+                                'tileSize': 512,
+                                'attribution': '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                            });
+                        }
+                        map.addLayer({
+                            'id': 'osm-layer',
+                            'type': 'raster',
+                            'source': 'osm',
+                            'minzoom': 0,
+                            'maxzoom': 19
+                        }, map.getStyle().layers[0].id);
+                        if(map.getLayer("s2maps-layer")) map.removeLayer("s2maps-layer");
+                        if(map.getLayer("thunderforest-layer")) map.removeLayer("thunderforest-layer");
+                    } else if (year == 1) {
+                        if (!map.getSource('thunderforest')) {
+                            map.addSource('thunderforest', {
+                                'type': 'raster',
+                                'tiles': [
+                                    'https://tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=37cf66b77198486e8a2eb0e63080634f'
+                                ],
+                                'tileSize': 512,
+                                'attribution': 'Maps © <a href="https://www.thunderforest.com/">Thunderforest</a>, Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                            });
+                        }
+                        map.addLayer({
+                            'id': 'thunderforest-layer',
+                            'type': 'raster',
+                            'source': 'thunderforest',
+                            'minzoom': 0,
+                            'maxzoom': 19
+                        }, map.getStyle().layers[0].id);
+                        if(map.getLayer("s2maps-layer")) map.removeLayer("s2maps-layer");
+                        if(map.getLayer("osm-layer")) map.removeLayer("osm-layer");
+                    } else if (year == 2016) { // 2016 doesn't follow the naming convention
                         source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                        map.addLayer({
+                            'id': 's2maps-layer',
+                            'type': 'raster',
+                            'source': 's2maps',
+                            'minzoom': 1,
+                            'maxzoom': 20
+                        }, map.getStyle().layers[0].id);
+                        map.removeLayer("thunderforest-layer");
+                        map.removeLayer("osm-layer");
                     } else {
                         source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
+                        map.addLayer({
+                            'id': 's2maps-layer',
+                            'type': 'raster',
+                            'source': 's2maps',
+                            'minzoom': 1,
+                            'maxzoom': 20
+                        }, map.getStyle().layers[0].id);
+                        if(map.getLayer("osm-layer")) map.removeLayer("osm-layer");
+                        if(map.getLayer("thunderforest-layer")) map.removeLayer("thunderforest-layer");
                     }
                 }
             });
         });
-
 
         // const defaultBaseMap = document.createElement('div');
         // defaultBaseMap.innerHTML = `
@@ -166,7 +232,7 @@
                         'tiles': [
                             `https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${defaultYear}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=512&height=512&srs=EPSG:3857&bbox={bbox-epsg-3857}`
                         ],
-                        'tileSize': 256,
+                        'tileSize': 512,
                         'attribution': '<a href = "https://s2maps.eu/">Sentinel-2 cloudless - https://s2maps.eu</a> by <a href = "https://eox.at/">EOX IT Services GmbH<a/>'
                     }
                 },
@@ -226,6 +292,29 @@
                 'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
             });
             map.addLayer({
+                'id': `polygon-fill-${defaultYear}`,
+                'type': 'fill',
+                'source': `geoserver-wfs-${defaultYear}`,
+                'minzoom': 5,
+                'maxzoom': 20,
+                'paint': {
+                    'fill-color': getColor(defaultYear),
+                    'fill-opacity': 0.25
+                }
+            });
+            map.addLayer({
+                'id': `polygon-line2-${defaultYear}`,
+                'type': 'line',
+                'source': `geoserver-wfs-${defaultYear}`,
+                'minzoom': 5,
+                'maxzoom': 20,
+                'paint': {
+                    'line-color': '#000000',
+                    'line-width': 3,
+                    'line-opacity': 1
+                }
+            });
+            map.addLayer({
                 'id': `polygon-line-${defaultYear}`,
                 'type': 'line',
                 'source': `geoserver-wfs-${defaultYear}`,
@@ -235,17 +324,6 @@
                     'line-color': '#FFFFFF',
                     'line-width': 1,
                     'line-opacity': 1
-                }
-            });
-            map.addLayer({
-                'id': `polygon-fill-${defaultYear}`,
-                'type': 'fill',
-                'source': `geoserver-wfs-${defaultYear}`,
-                'minzoom': 5,
-                'maxzoom': 20,
-                'paint': {
-                    'fill-color': getColor(defaultYear),
-                    'fill-opacity': 0.25
                 }
             });
 
@@ -332,6 +410,29 @@
                         });
 
                         map.addLayer({
+                            'id': `polygon-fill-${year}`,
+                            'type': 'fill',
+                            'source': `geoserver-wfs-${year}`,
+                            'minzoom': 5,
+                            'maxzoom': 20,
+                            'paint': {
+                                'fill-color': getColor(year),
+                                'fill-opacity': 0.25
+                            }
+                        });
+                        map.addLayer({
+                            'id': `polygon-line2-${year}`,
+                            'type': 'line',
+                            'source': `geoserver-wfs-${year}`,
+                            'minzoom': 5,
+                            'maxzoom': 20,
+                            'paint': {
+                                'line-color': '#000000',
+                                'line-width': 3,
+                                'line-opacity': 1
+                            }
+                        });
+                        map.addLayer({
                             'id': `polygon-line-${year}`,
                             'type': 'line',
                             'source': `geoserver-wfs-${year}`,
@@ -341,17 +442,6 @@
                                 'line-color': "#FFFFFF",
                                 'line-width': 1,
                                 'line-opacity': 1
-                            }
-                        });
-                        map.addLayer({
-                            'id': `polygon-fill-${year}`,
-                            'type': 'fill',
-                            'source': `geoserver-wfs-${year}`,
-                            'minzoom': 5,
-                            'maxzoom': 20,
-                            'paint': {
-                                'fill-color': getColor(year),
-                                'fill-opacity': 0.25
                             }
                         });
 
@@ -395,10 +485,11 @@
                     }
                 } else {
                     // Remove the layers if they exist
-                    if(map.getLayer(layerId)) {
+                    if (map.getLayer(layerId)) {
                         map.removeLayer(layerId);
-                        map.removeLayer(`polygon-line-${year}`);
                         map.removeLayer(`polygon-fill-${year}`);
+                        map.removeLayer(`polygon-line2-${year}`);
+                        map.removeLayer(`polygon-line-${year}`);
                     }
                 }
             });
