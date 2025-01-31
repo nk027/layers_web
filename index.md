@@ -4,21 +4,21 @@ layout: default
 
 In the project *Layers of Natural Resource Extraction*, we develop and apply new methods to assess the impacts of resource extraction. New Bayesian methods allow us to better capture and analyze the economic, environmental and social layers of these impacts, and help us better understand the interconnections between them and across time and space.
 
-# Research 
+# Research
 
-- Kuschnig, N., Vashold, L., Soterroni, A., and Obersteiner, M. (2023). Eroding Resilience of Deforestation Interventions — Evidence from Brazil’s Lost Decade. *Environmental Research Letters*, <b>18</b>(7):074039, DOI: [10.1088/1748-9326/acdfe7](https://doi.org/10.1088/1748-9326/acdfe7).
+- **Kuschnig, N.**, **Vashold, L.**, Soterroni, A., and Obersteiner, M. (2023). Eroding Resilience of Deforestation Interventions — Evidence from Brazil’s Lost Decade. *Environmental Research Letters*, <b>18</b>(7):074039, DOI: [10.1088/1748-9326/acdfe7](https://doi.org/10.1088/1748-9326/acdfe7).
 
 ## Work-in-progress
 
-- Luckeneder, S., Maus, V., Siqueira-Gay, J. Krisztin, T., and Kuhn, M.: Transient Economic Benefit and Persistent Forest Loss: Legacy of the Brazilian Mining Sector Across Regions. *Under review*.
+- **Luckeneder, S.**, Maus, V., Siqueira-Gay, J. Krisztin, T., and Kuhn, M.: Transient Economic Benefit and Persistent Forest Loss: Legacy of the Brazilian Mining Sector Across Regions. R&R at *Nature Communications*.
 
-- Sepin, P., Kuschnig, N., and Vashold, L.: Mapping Mining Areas in the Tropics from 2016–2024. [Working paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), *under review*.
+- **Sepin, P.**, **Kuschnig, N.**, and **Vashold, L.**: Mapping Mining Areas in the Tropics from 2016–2024. [Working Paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), R&R at *Nature Sustainability*.
 
-- Vashold, L., Pirich, G., Heinze, M., and Kuschnig, N.: Mines–Rivers–Yields: Downstream Mining Impacts on Agriculture in Africa. [Working paper](https://www.kuschnig.eu/files/wp_mine-basins_wip.pdf), *under review*.
+- **Vashold, L.**, **Pirich, G.**, **Heinze, M.**, and **Kuschnig, N.**: Mines–Rivers–Yields: Downstream Mining Impacts on Agriculture in Africa. [Working Paper](https://www.kuschnig.eu/files/wp_mine-basins_wip.pdf), [Interactive Map](https://www.layers.at/pages/mine_map.html) R&R at the *Journal of Development Economics*.
 
-- Kuschnig, N.: Networks in Space – Spillovers in Amazon Deforestation. [Work in progress](https://kuschnig.eu/files/wp_networks-in-space_wip.pdf), [Slides](https://kuschnig.eu/files/pres_networks-in-space_iaae-2024-06.pdf).
-    
-- Kuschnig, N. and Vashold, L.: Man Eats Forest: Impacts of Cattle Ranching on Amazon Deforestation. *Work in progress*, [Slides](https://kuschnig.eu/files/pres_deforestation-cattle_eaere-2024-07.pdf).
+- Kuschnig, N.: Networks in Space – Spillovers in Amazon Deforestation. [Work in Progress](https://kuschnig.eu/files/wp_networks-in-space_wip.pdf), [Slides](https://kuschnig.eu/files/pres_networks-in-space_iaae-2024-06.pdf).
+
+- Kuschnig, N. and Vashold, L.: Man Eats Forest: Impacts of Cattle Ranching on Amazon Deforestation. *Work in Progress*, [Slides](https://kuschnig.eu/files/pres_deforestation-cattle_eaere-2024-07.pdf).
 
 # Team
 
