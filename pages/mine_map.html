@@ -271,13 +271,13 @@
             map.addSource(`geoserver-${defaultYear}`, {
                 'type': 'raster',
                 'tiles': [
-                    'https://vps.fineprint.global/gs/geoserver/oenb/wms?' +
+                    'https://roerl.de/geoserver/NSust/wms?' +
                     'SERVICE=WMS&' +
                     'VERSION=1.1.1&' +
                     'REQUEST=GetMap&' +
                     'FORMAT=image/png8&' +
                     'TRANSPARENT=true&' +
-                    'LAYERS=oenb:mine-predictions-v1&' +
+                    'LAYERS=mining_polygons_2016-2024&' +
                     'WIDTH=256&' +
                     'HEIGHT=256&' +
                     'SRS=EPSG:3857&' +
@@ -299,11 +299,11 @@
             // WFS for higher zoom
             map.addSource(`geoserver-wfs-${defaultYear}`, {
                 'type': 'geojson',
-                'data': `https://vps.fineprint.global/gs/geoserver/oenb/wfs?` +
+                'data': `https://roerl.de/geoserver/NSust/wfs?` +
                     'service=WFS&' +
                     'version=2.0.0&' +
                     'request=GetFeature&' +
-                    'typeName=oenb:mine-predictions-v1&' +
+                    'typeName=NSust:mining_polygons_2016-2024&' +
                     'outputFormat=application/json&' +
                     `CQL_FILTER=year=${defaultYear}`,
                 'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
@@ -397,29 +397,29 @@
                         map.addSource(sourceId, {
                             'type': 'raster',
                             'tiles': [
-                                'https://vps.fineprint.global/gs/geoserver/oenb/wms?' +
+                                'https://roerl.de/geoserver/NSust/wms?' +
                                 'SERVICE=WMS&' +
                                 'VERSION=1.1.1&' +
                                 'REQUEST=GetMap&' +
                                 'FORMAT=image/png8&' +
                                 'TRANSPARENT=true&' +
-                                'LAYERS=oenb:mine-predictions-v1&' +
+                                'LAYERS=mining_polygons_2016-2024&' +
                                 'WIDTH=256&' +
                                 'HEIGHT=256&' +
                                 'SRS=EPSG:3857&' +
                                 'BBOX={bbox-epsg-3857}&' +
-                                `CQL_FILTER=year=${year}`,
+                                'CQL_FILTER=year=' + year
                             ],
                             'tileSize': 256,
                             'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
                         });
                         map.addSource(`geoserver-wfs-${year}`, {
                             'type': 'geojson',
-                            'data': `https://vps.fineprint.global/gs/geoserver/oenb/wfs?` +
+                            'data': `https://roerl.de/geoserver/NSust/wfs?` +
                                 'service=WFS&' +
                                 'version=2.0.0&' +
                                 'request=GetFeature&' +
-                                'typeName=oenb:mine-predictions-v1&' +
+                                'typeName=NSust:mining_polygons_2016-2024&' +
                                 'outputFormat=application/json&' +
                                 `CQL_FILTER=year=${year}`,
                             'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
@@ -525,3 +525,4 @@
 </body>
 
 </html>
+
