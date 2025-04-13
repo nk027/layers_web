@@ -12,9 +12,9 @@ In the project *Layers of Natural Resource Extraction*, we develop and apply new
 
 - *Luckeneder, S.*, Maus, V., Siqueira-Gay, J. Krisztin, T., and Kuhn, M.: Transient Economic Benefit and Persistent Forest Loss: Legacy of the Brazilian Mining Sector Across Regions. R&R at *Nature Communications*.
 
-- *Sepin, P.*, *Kuschnig, N.*, and *Vashold, L.*: Mapping Mining Areas in the Tropics from 2016–2024. [Working Paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), R&R at *Nature Sustainability*.
+- *Sepin, P.*, *Kuschnig, N.*, and *Vashold, L.*: Mapping Mining Areas in the Tropics from 2016–2024. [Working Paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), [Interactive Map](https://www.layers.at/pages/mine_map.html), R&R at *Nature Sustainability*.
 
-- *Vashold, L.*, *Pirich, G.*, *Heinze, M.*, and *Kuschnig, N.*: Mines–Rivers–Yields: Downstream Mining Impacts on Agriculture in Africa. [Working Paper](https://www.kuschnig.eu/files/wp_mine-basins_wip.pdf), [Interactive Map](https://www.layers.at/pages/mine_map.html) R&R at the *Journal of Development Economics*.
+- *Vashold, L.*, *Pirich, G.*, *Heinze, M.*, and *Kuschnig, N.*: Mines–Rivers–Yields: Downstream Impacts of Mines on Agriculture in Africa. [Working Paper](https://www.kuschnig.eu/files/wp_mine-basins_wip.pdf), R&R at the *Journal of Development Economics*.
 
 - *Kuschnig, N.*: Networks in Space – Spillovers in Amazon Deforestation. [Work in Progress](https://kuschnig.eu/files/wp_networks-in-space_wip.pdf), [Slides](https://kuschnig.eu/files/pres_networks-in-space_iaae-2024-06.pdf).
 
