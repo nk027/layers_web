@@ -5,59 +5,215 @@
     <title>Mapping Mining Areas in the Tropics from 2016–2024</title>
     <meta charset='utf-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" />
-    <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
-    <style>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/maplibre-gl-basemaps@1.1.0/dist/basemaps.js"></script>
+        <style>
         body {
             margin: 0;
             padding: 0;
+            font-family: 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
         }
-
-        html,
-        body,
-        #map {
+        html, body, #map {
             height: 100%;
         }
-
         #title {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1;
-            background: white;
-            padding: 2px;
-            border-radius: 4px;
+            top: 1em;
+            left: 1em;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            border-left: 4px solid #008080;
+            transition: all 0.3s ease;
         }
-        #title>h3 {
-            margin: 4px;
+        #title .long-title {
+            display: inline;
         }
-        #title>h3>a {
-            color: black;
-            text-decoration: none;
+        #title .short-title {
+            display: none;
         }
-        #title>h3>a:hover {
-            text-decoration: underline;
-        }
-
         #controls {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            bottom: 1.2em;
+            right: 1em;
+            z-index: 0;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            max-height: 40vh;
+            border-top: 4px solid #008080;
+            transition: all 0.3s ease;
+        }
+        #controls:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        #controls-toggle {
+            position: absolute;
+            bottom: 1.2em;
+            right: 1em;
             z-index: 1;
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: none;
+            cursor: pointer;
+            display: none;
+            font-weight: bold;
+        }
+         @media (max-width: 768px) {
+            #title {
+                max-width: 400px;
+                font-size: 0.9em;
+                padding: 4px 8px;
+                opacity: 0.8;
+            }
+            #title .long-title {
+                display: none;
+            }
+            #title .short-title {
+                display: inline;
+            }
+
+            #controls {
+                opacity: 0;
+                visibility: hidden;
+                bottom: 1.2em;
+                right: 1em;
+                width: calc(100% - 60px);
+                max-width: 400px;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+            #controls.visible {
+                opacity: 1;
+                visibility: visible;
+            }
+            #controls-toggle {
+                display: block;
+                transition: background-color 0.2s ease;
+            }
+            #controls-toggle:hover {
+                background-color: #f0f0f0;
+            }
+            #wmsControls {
+                grid-template-columns: repeat(3, 1fr);
+                gap: .4em;
+            }
+        }
+
+        #title:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        #title>h3 {
+            margin: 6px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        #title a {
+            color: #006060;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        #title a:hover {
+            color: #00a0a0;
+            text-decoration: underline;
         }
 
         .maplibregl-popup-content>p {
             margin: 0;
         }
-
         .control-group {
-            margin-bottom: 10px;
+            margin-bottom: 18px;
+        }
+        .control-group:last-child {
+            margin-bottom: 0;
         }
         .control-group h5 {
-            margin: 5px 0;
+            margin: 0 0 10px 0;
+            padding-bottom: 4px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #006060;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #006060;
+        }
+        #baseMapControls div,
+        #wmsControls div {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        #baseMapControls input[type="radio"],
+        #wmsControls input[type="checkbox"] {
+            cursor: pointer;
+        }
+        #baseMapControls input[type="radio"] {
+            margin: 0.2em 0.5em;
+        }
+        #baseMapControls label,
+        #wmsControls label {
+            font-size: 0.9em;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #wmsControls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .2em;
+            margin-right: .2em;
+        }
+        #wmsControls div {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .year-color-circle {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 8px;
+        }
+
+        #baseMapControls {
+            padding: 4px 0px;
+        }
+        #yearSelect {
+            margin-left: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.85em;
+            background-color: white;
+        }
+
+        .maplibregl-popup-content {
+            padding: 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            font-size: 1.0em;
+            max-width: 400px;
+        }
+        .maplibregl-popup-content h4 {
+            margin: 0 0 8px 0;
+            font-size: 1.2em;
+        }
+        .maplibregl-popup-content p {
+            margin: 0 0 5px 0;
+            font-size: 1.0em;
+        }
+        .maplibregl-popup-content p:last-child {
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -65,464 +221,746 @@
 <body>
     <div id="map"></div>
     <div id="title">
-        <h3><a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Mapping Mining Areas in the Tropics from
-                2016–2024</a></h3>
+        <h3>
+            <span class="short-title">Mapping Mining (<a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">DOI</a>)</span>
+            <span class="long-title">
+                Mapping Mining Areas in the Tropics from 2016–2024 (<a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">Article</a>)
+            </span>
+        </h3>
     </div>
+
+    <button id="controls-toggle">☰ Options</button>
     <div id="controls">
-        <div class="control-group">
-            <h5>Basemap</h5>
-            <div id="baseMapControls"></div>
-        </div>
         <div class="control-group">
             <h5>Mine polygons</h5>
             <div id="wmsControls"></div>
         </div>
+        <div class="control-group">
+            <h5>Basemap</h5>
+            <div id="baseMapControls"></div>
+        </div>
     </div>
 
     <script>
-        const years_polygons = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
-        const years_basemap = [2023, 2022, 2021, 2020, 2019, 2018, 2016]
-        const defaultYear = 2023;
-        const colors = [
-            '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#d9d9d9'
-        ];
-        function getColor(year) {
-            const index = year - 2016;
-            return colors[Math.min(index, colors.length - 1)];
-        }
+        // Mobile controls toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const controlsToggle = document.getElementById('controls-toggle');
+            const controls = document.getElementById('controls');
 
-        // Generate radio buttons for basemap
-        const baseMapControls = document.getElementById('baseMapControls');
-        // Add radio button for the reactive default vs. single years
-        baseMapControls.innerHTML = `
-            <div>
-                <input type="radio" id="baseReactive" name="baseMap" value="${defaultYear}" checked>
-                <label for="baseReactive">Reactive</label>
-            </div>
-            <div>
-                <input type="radio" id="baseYear" name="baseMap" value="${defaultYear}">
-                <label for="baseYear">Fixed:</label>
-                <select id="yearSelect" name="yearSelect">
-                    ${years_basemap.map(year =>
-            `<option value="${year}" ${year === defaultYear ? 'selected' : ''}>${year}</option>`
-        ).join('')}
-                </select>
-            </div>
-            <div>
-                <input type="radio" id="baseThunder" name="baseMap" value="0">
-                <label for="baseOSM">Thunderforest</label>
-            </div>
-            <div>
-                <input type="radio" id="baseOSM" name="baseMap" value="1">
-                <label for="baseOSM">OpenStreetMap</label>
-            </div>
-        `;
+            controlsToggle.addEventListener('click', function() {
+                controls.classList.toggle('visible');
+                controlsToggle.textContent = controls.classList.contains('visible') ? '✕ Close' : '☰ Options';
+            });
 
-        // Update the radio based on the dropdowns value
-        document.getElementById('yearSelect').addEventListener('change', (e) => {
-            document.getElementById('baseYear').value = e.target.value;
-        });
-        // Update the basemap based on the dropdowns value
-        document.getElementById('yearSelect').addEventListener('change', (e) => {
-            year = e.target.value;
-            const source = map.getSource('s2maps');
-
-            if (source) {
-                if (year == 2016) { // 2016 doesn't follow the naming convention
-                    source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                    map.addLayer({
-                        'id': 's2maps-layer',
-                        'type': 'raster',
-                        'source': 's2maps',
-                        'minzoom': 1,
-                        'maxzoom': 20
-                    }, map.getStyle().layers[0].id);
-                    map.removeLayer("thunderforest-layer");
-                    map.removeLayer("osm-layer");
-                } else {
-                    source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                    map.addLayer({
-                        'id': 's2maps-layer',
-                        'type': 'raster',
-                        'source': 's2maps',
-                        'minzoom': 1,
-                        'maxzoom': 20
-                    }, map.getStyle().layers[0].id);
-                    if(map.getLayer("osm-layer")) map.removeLayer("osm-layer");
-                    if(map.getLayer("thunderforest-layer")) map.removeLayer("thunderforest-layer");
-                }
-            }
-        });
-
-        // Listener for the radios
-        document.querySelectorAll('input[name="baseMap"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const year = e.target.value;
-                const source = map.getSource('s2maps');
-
-                if (source) {
-                    if (year == 0) {
-                        if (!map.getSource('osm')) {
-                            map.addSource('osm', {
-                                'type': 'raster',
-                                'tiles': [
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-                                ],
-                                'tileSize': 512,
-                                'attribution': '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-                            });
-                        }
-                        map.addLayer({
-                            'id': 'osm-layer',
-                            'type': 'raster',
-                            'source': 'osm',
-                            'minzoom': 0,
-                            'maxzoom': 20
-                        }, map.getStyle().layers[0].id);
-                        if(map.getLayer("s2maps-layer")) map.removeLayer("s2maps-layer");
-                        if(map.getLayer("thunderforest-layer")) map.removeLayer("thunderforest-layer");
-                    } else if (year == 1) {
-                        if (!map.getSource('thunderforest')) {
-                            map.addSource('thunderforest', {
-                                'type': 'raster',
-                                'tiles': [
-                                    'https://tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=37cf66b77198486e8a2eb0e63080634f'
-                                ],
-                                'tileSize': 512,
-                                'attribution': 'Maps © <a href="https://www.thunderforest.com/">Thunderforest</a>, Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-                            });
-                        }
-                        map.addLayer({
-                            'id': 'thunderforest-layer',
-                            'type': 'raster',
-                            'source': 'thunderforest',
-                            'minzoom': 0,
-                            'maxzoom': 20
-                        }, map.getStyle().layers[0].id);
-                        if(map.getLayer("s2maps-layer")) map.removeLayer("s2maps-layer");
-                        if(map.getLayer("osm-layer")) map.removeLayer("osm-layer");
-                    } else if (year == 2016) { // 2016 doesn't follow the naming convention
-                        source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        map.addLayer({
-                            'id': 's2maps-layer',
-                            'type': 'raster',
-                            'source': 's2maps',
-                            'minzoom': 1,
-                            'maxzoom': 20
-                        }, map.getStyle().layers[0].id);
-                        map.removeLayer("thunderforest-layer");
-                        map.removeLayer("osm-layer");
-                    } else {
-                        source.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        map.addLayer({
-                            'id': 's2maps-layer',
-                            'type': 'raster',
-                            'source': 's2maps',
-                            'minzoom': 1,
-                            'maxzoom': 20
-                        }, map.getStyle().layers[0].id);
-                        if(map.getLayer("osm-layer")) map.removeLayer("osm-layer");
-                        if(map.getLayer("thunderforest-layer")) map.removeLayer("thunderforest-layer");
-                    }
+            // Close controls when map is clicked (mobile only)
+            document.getElementById('map').addEventListener('click', function(e) {
+                if (window.innerWidth <= 640 && !controls.contains(e.target) && !controlsToggle.contains(e.target)) {
+                    controls.classList.remove('visible');
+                    controlsToggle.textContent = '☰ Options';
                 }
             });
         });
 
-        // Generate checkboxes for the polygon layers
-        const wmsControls = document.getElementById('wmsControls');
-        years_polygons.forEach(year => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <input type="checkbox" id="wms${year}" value="${year}" ${year == defaultYear ? 'checked' : ''}>
-                <label for="wms${year}">${year}</label>
-            `;
-            wmsControls.appendChild(div);
-        });
 
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: {
-                version: 8,
-                sources: {
-                    's2maps': {
-                        'type': 'raster',
-                        'tiles': [
-                            `https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${defaultYear}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=512&height=512&srs=EPSG:3857&bbox={bbox-epsg-3857}`
-                        ],
-                        'tileSize': 512,
-                        'attribution': '<a href = "https://s2maps.eu/">Sentinel-2 cloudless - https://s2maps.eu</a> by <a href = "https://eox.at/">EOX IT Services GmbH<a/>'
-                    }
-                },
-                layers: [{
-                    'id': 's2maps-layer',
-                    'type': 'raster',
-                    'source': 's2maps',
-                    'minzoom': 1,
-                    'maxzoom': 20
-                }]
+        // Configuration
+        const CONFIG = {
+            years: {
+                basemap: [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2016],
+                polygons: [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
             },
-            center: [0, 0],
-            zoom: 2
-        });
+            defaultYear: 2024,
+            colors: [
+                '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#d9d9d9'
+            ],
+            urls: {
+                basemap: {
+                    s2_2016: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg',
+                    s2_standard: (year) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-${year}_3857/default/g/{z}/{y}/{x}.jpg`,
+                    terrain: 'https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg',
+                    osm: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    thunderforest: 'https://tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=37cf66b77198486e8a2eb0e63080634f'
+                },
+                // wms: (year) => `https://roerl.de/geoserver/NSust/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/vnd.jpeg-png8&TRANSPARENT=true&LAYERS=mining_polygons_2016-2024&WIDTH=512&HEIGHT=512&SRS=EPSG:3857&BBOX={bbox-epsg-3857}&CQL_FILTER=year=${year}`,
+                wfs_centroid: (year) => `https://roerl.de/geoserver/NSust/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=NSust:mining_centroids_2016-2024&outputFormat=application/json&CQL_FILTER=year=${year}&propertyName=geom`, // We only need the geom property for the points
+                wfs: (year) => `https://roerl.de/geoserver/NSust/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=NSust:mining_polygons_2016-2024&outputFormat=application/json&CQL_FILTER=year=${year}`
+            },
+            initialView: {
+                center: [125.10, 1.58], // Toka Tindung
+                zoom: 12
+            },
+            clusterStyle: {
+                radius: 75,
+                colors: ['#51bbd6', '#f1f075', '#f28cb1'],
+                thresholds: [10, 75],
+                radiusSizes: [20, 30, 40]
+            },
+            map: {
+                minZoomPolygons: 10,
+                maxZoomClusters: 10
+            }
+        };
 
-        // Add the polygons next
-        map.on("load", () => {
-            // WMS for low zoom
-            map.addSource(`geoserver-${defaultYear}`, {
-                'type': 'raster',
-                'tiles': [
-                    'https://roerl.de/geoserver/NSust/wms?' +
-                    'SERVICE=WMS&' +
-                    'VERSION=1.1.1&' +
-                    'REQUEST=GetMap&' +
-                    'FORMAT=image/png8&' +
-                    'TRANSPARENT=true&' +
-                    'LAYERS=mining_polygons_2016-2024&' +
-                    'WIDTH=256&' +
-                    'HEIGHT=256&' +
-                    'SRS=EPSG:3857&' +
-                    'BBOX={bbox-epsg-3857}&' +
-                    'CQL_FILTER=year=' + defaultYear
-                ],
-                'tileSize': 256,
-                'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
-            });
-            map.addLayer({
-                'id': `polygon-${defaultYear}`,
-                'type': 'raster',
-                'source': `geoserver-${defaultYear}`,
-                'minzoom': 1,
-                'maxzoom': 8,
-                'paint': { 'raster-opacity': 1 }
-            });
+        // Utility functions
+        const Utils = {
+            debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            },
 
-            // WFS for higher zoom
-            map.addSource(`geoserver-wfs-${defaultYear}`, {
-                'type': 'geojson',
-                'data': `https://roerl.de/geoserver/NSust/wfs?` +
-                    'service=WFS&' +
-                    'version=2.0.0&' +
-                    'request=GetFeature&' +
-                    'typeName=NSust:mining_polygons_2016-2024&' +
-                    'outputFormat=application/json&' +
-                    `CQL_FILTER=year=${defaultYear}`,
-                'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
-            });
-            map.addLayer({
-                'id': `polygon-fill-${defaultYear}`,
-                'type': 'fill',
-                'source': `geoserver-wfs-${defaultYear}`,
-                'minzoom': 8,
-                'maxzoom': 20,
-                'paint': {
-                    'fill-color': getColor(defaultYear),
-                    'fill-opacity': 0.25
-                }
-            });
-            map.addLayer({
-                'id': `polygon-line2-${defaultYear}`,
-                'type': 'line',
-                'source': `geoserver-wfs-${defaultYear}`,
-                'minzoom': 8,
-                'maxzoom': 20,
-                'paint': {
-                    'line-color': '#000000',
-                    'line-width': 3,
-                    'line-opacity': 1
-                }
-            });
-            map.addLayer({
-                'id': `polygon-line-${defaultYear}`,
-                'type': 'line',
-                'source': `geoserver-wfs-${defaultYear}`,
-                'minzoom': 8,
-                'maxzoom': 20,
-                'paint': {
-                    'line-color': '#FFFFFF',
-                    'line-width': 1,
-                    'line-opacity': 1
-                }
-            });
+            getYearColor(year) {
+                const maxYear = Math.max(...CONFIG.years.polygons);
+                const index = maxYear - year;
+                return CONFIG.colors[Math.min(index, CONFIG.colors.length - 1)];
+            },
 
-            map.on('click', `polygon-fill-${defaultYear}`, (e) => {
-                const feature = e.features[0];
-                const props = feature.properties;
-                const coords = [e.lngLat.lng, e.lngLat.lat];
-                const content = `
+            createPopupContent(props, lngLat) {
+                return `
                     <p>Country: ${props.country_name}</p>
                     <p>Year: ${props.year}</p>
                     <p>Area: ${(props.area / 1_000_000)?.toFixed(2)} km²</p>
-                    <p>Lon/Lat: ${e.lngLat.lng?.toFixed(2)}, ${e.lngLat.lat?.toFixed(2)}</p>
+                    <p>Lon/Lat: ${lngLat.lng?.toFixed(2)}, ${lngLat.lat?.toFixed(2)}</p>
                 `;
-                new maplibregl.Popup()
-                    .setLngLat(coords)
-                    .setHTML(content)
-                    .addTo(map);
-            });
-            // Change the cursor to a pointer when the mouse is over the places layer.
-            map.on('mouseenter', `polygon-fill-${defaultYear}`, () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
+            }
+        };
 
-            // Change it back to a pointer when it leaves.
-            map.on('mouseleave', `polygon-fill-${defaultYear}`, () => {
-                map.getCanvas().style.cursor = '';
-            });
+        // BasemapManager handles basemap-related functionality
+        class BasemapManager {
+            constructor(map, config) {
+                this.map = map;
+                this.config = config;
+                this.activeType = 'sentinel';
+                this.activeYear = config.defaultYear;
+            }
 
-            // Zoom into Toka Tindung at the start
-            map.flyTo({
-              center: [125.10, 1.58],
-              zoom: 12,
-              duration: 8000,
-              essential: true,
-              // Ease in and out of the animation
-              easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
-            });
-        });
-
-        // Handle WMS layer toggles
-        document.querySelectorAll('[id^="wms"]').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const year = e.target.value;
-                const layerId = `polygon-${year}`;
-                const sourceId = `geoserver-${year}`;
-
-                // Also adjust the basemap, if not fixed
-                const sourceBasemap = map.getSource('s2maps');
-                const currentBasemap = document.querySelector('input[name="baseMap"]:checked').id;
-
-                if (e.target.checked) {
-                    // Add sources if they don't exist
-                    if (!map.getSource(sourceId)) {
-                        map.addSource(sourceId, {
-                            'type': 'raster',
-                            'tiles': [
-                                'https://roerl.de/geoserver/NSust/wms?' +
-                                'SERVICE=WMS&' +
-                                'VERSION=1.1.1&' +
-                                'REQUEST=GetMap&' +
-                                'FORMAT=image/png8&' +
-                                'TRANSPARENT=true&' +
-                                'LAYERS=mining_polygons_2016-2024&' +
-                                'WIDTH=256&' +
-                                'HEIGHT=256&' +
-                                'SRS=EPSG:3857&' +
-                                'BBOX={bbox-epsg-3857}&' +
-                                'CQL_FILTER=year=' + year
-                            ],
-                            'tileSize': 256,
-                            'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
-                        });
-                        map.addSource(`geoserver-wfs-${year}`, {
-                            'type': 'geojson',
-                            'data': `https://roerl.de/geoserver/NSust/wfs?` +
-                                'service=WFS&' +
-                                'version=2.0.0&' +
-                                'request=GetFeature&' +
-                                'typeName=NSust:mining_polygons_2016-2024&' +
-                                'outputFormat=application/json&' +
-                                `CQL_FILTER=year=${year}`,
-                            'attribution': 'Yearly Mine Polygons (Sepin, Vashold, and Kuschnig, 2025)'
-                        });
-                    }
-                    // Add layers if they don't exist
-                    if (!map.getLayer(layerId)) {
-                        map.addLayer({
-                            'id': layerId,
-                            'type': 'raster',
-                            'source': sourceId,
-                            'minzoom': 1,
-                            'maxzoom': 8,
-                            'paint': { 'raster-opacity': 1 }
-                        });
-
-                        map.addLayer({
-                            'id': `polygon-fill-${year}`,
-                            'type': 'fill',
-                            'source': `geoserver-wfs-${year}`,
-                            'minzoom': 8,
-                            'maxzoom': 20,
-                            'paint': {
-                                'fill-color': getColor(year),
-                                'fill-opacity': 0.25
-                            }
-                        });
-                        map.addLayer({
-                            'id': `polygon-line2-${year}`,
-                            'type': 'line',
-                            'source': `geoserver-wfs-${year}`,
-                            'minzoom': 8,
-                            'maxzoom': 20,
-                            'paint': {
-                                'line-color': '#000000',
-                                'line-width': 3,
-                                'line-opacity': 1
-                            }
-                        });
-                        map.addLayer({
-                            'id': `polygon-line-${year}`,
-                            'type': 'line',
-                            'source': `geoserver-wfs-${year}`,
-                            'minzoom': 8,
-                            'maxzoom': 20,
-                            'paint': {
-                                'line-color': "#FFFFFF",
-                                'line-width': 1,
-                                'line-opacity': 1
-                            }
-                        });
-
-                        // Add the listener
-                        map.on('click', `polygon-fill-${year}`, (e) => {
-                            const feature = e.features[0];
-                            const props = feature.properties;
-                            const coords = [e.lngLat.lng, e.lngLat.lat];
-                            const content = `
-                                <p>Country: ${props.country_name}</p>
-                                <p>Year: ${props.year}</p>
-                                <p>Area: ${(props.area / 1_000_000)?.toFixed(2)} km²</p>
-                                <p>Lon/Lat: ${e.lngLat.lng?.toFixed(2)}, ${e.lngLat.lat?.toFixed(2)}</p>
-                            `;
-                            new maplibregl.Popup()
-                                .setLngLat(coords)
-                                .setHTML(content)
-                                .addTo(map);
-                        });
-                        // Change the cursor to a pointer when the mouse is over the places layer.
-                        map.on('mouseenter', `polygon-fill-${year}`, () => {
-                            map.getCanvas().style.cursor = 'pointer';
-                        });
-
-                        // Change it back to a pointer when it leaves.
-                        map.on('mouseleave', `polygon-fill-${year}`, () => {
-                            map.getCanvas().style.cursor = '';
-                        });
-                    }
-                    // Update the basemap if it isn't fixed
-                    if (currentBasemap === 'baseReactive' && sourceBasemap) {
-                        // Update the value if there's radio toggling
-                        document.getElementById('baseReactive').value = e.target.value;
-                        if (year == 2016 || year == 2017) { // 2016 doesn't follow the naming convention, 2017 isn't available
-                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        } else if (year == 2024) { // There is no 2024 basemap yet
-                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-2023_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        } else {
-                            sourceBasemap.setTiles([`https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG:3857&bbox={bbox-epsg-3857}`]);
-                        }
-                    }
-                } else {
-                    // Remove the layers if they exist
-                    if (map.getLayer(layerId)) {
-                        map.removeLayer(layerId);
-                        map.removeLayer(`polygon-fill-${year}`);
-                        map.removeLayer(`polygon-line2-${year}`);
-                        map.removeLayer(`polygon-line-${year}`);
+            getBasemapUrl(type, year) {
+                if (type === 'osm') {
+                    return this.config.urls.basemap.osm;
+                } else if (type === 'thunderforest') {
+                    return this.config.urls.basemap.thunderforest;
+                } else if (type === 'sentinel') {
+                    if (year == 2016 || year == 2017) {
+                        return this.config.urls.basemap.s2_2016;
+                    } else {
+                        return this.config.urls.basemap.s2_standard(year);
                     }
                 }
-            });
-        });
+            }
+
+            setupSources() {
+                return {
+                    s2maps: {
+                        type: 'raster',
+                        tiles: [this.getBasemapUrl('sentinel', this.config.defaultYear)],
+                        tileSize: 512,
+                        attribution: '<a href="https://s2maps.eu/">Sentinel-2 cloudless - https://s2maps.eu</a> by <a href="https://eox.at/">EOX IT Services GmbH</a> (contains modified Copernicus Sentinel data)'
+                    },
+                    osm: {
+                        type: 'raster',
+                        tiles: [this.config.urls.basemap.osm],
+                        tileSize: 512,
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                    },
+                    thunderforest: {
+                        type: 'raster',
+                        tiles: [this.config.urls.basemap.thunderforest],
+                        tileSize: 512,
+                        attribution: 'Maps © <a href="https://www.thunderforest.com/">Thunderforest</a>, Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                    }
+                };
+            }
+
+            update(type, year) {
+                this.activeType = type;
+                if (year) this.activeYear = year;
+
+                // Remove existing layers
+                ['s2maps-layer', 'osm-layer', 'thunderforest-layer'].forEach(layer => {
+                    if (this.map.getLayer(layer)) this.map.removeLayer(layer);
+                });
+
+                // Add new basemap
+                if (type === 'osm') {
+                    this.map.addLayer({
+                        id: 'osm-layer',
+                        type: 'raster',
+                        source: 'osm',
+                        minzoom: 0,
+                        maxzoom: 20
+                    }, this.map.getStyle().layers[0].id);
+                } else if (type === 'thunderforest') {
+                    this.map.addLayer({
+                        id: 'thunderforest-layer',
+                        type: 'raster',
+                        source: 'thunderforest',
+                        minzoom: 0,
+                        maxzoom: 20
+                    }, this.map.getStyle().layers[0].id);
+                } else {
+                    this.map.getSource('s2maps').setTiles([this.getBasemapUrl('sentinel', year)]);
+                    this.map.addLayer({
+                        id: 's2maps-layer',
+                        type: 'raster',
+                        source: 's2maps',
+                        minzoom: 0,
+                        maxzoom: 20
+                    }, this.map.getStyle().layers[0].id);
+                }
+            }
+        }
+
+        // LayerManager handles the mining data layers
+        class LayerManager {
+            constructor(map, config) {
+                this.map = map;
+                this.config = config;
+                this.activeLayers = new Set([config.defaultYear.toString()]);
+                this.loadedFeatures = {};
+                this.loadedFeatureIds = {};
+                this.pendingRequests = {};
+                this.moveEndHandlers = {};
+                this.debounceTimers = {};
+            }
+
+            addYearLayer(year) {
+                const sourceId = `geoserver-${year}`;
+                const wfsSourceId = `geoserver-wfs-${year}`;
+
+                this._initializeTrackingForYear(year);
+                this._addCentroidSource(sourceId, year);
+                this._addClusterLayers(sourceId);
+                this._addPolygonSource(wfsSourceId);
+                this._addPolygonLayers(wfsSourceId, year);
+                this._setupEventHandlers(sourceId, wfsSourceId, year);
+            }
+
+            removeYearLayer(year) {
+                const layerIds = [
+                    `polygon-${year}`,
+                    `polygon-fill-${year}`,
+                    `polygon-line2-${year}`,
+                    `polygon-line-${year}`
+                ];
+
+                this._removeMapLayers(layerIds);
+                this._cleanupEventHandlers(year);
+            }
+
+            _initializeTrackingForYear(year) {
+                // Initialize data tracking structures for the year
+                if (!this.loadedFeatures) this.loadedFeatures = {};
+                if (!this.loadedFeatureIds) this.loadedFeatureIds = {};
+                if (!this.loadedFeatures[year]) this.loadedFeatures[year] = new Set();
+                if (!this.loadedFeatureIds[year]) this.loadedFeatureIds[year] = new Set();
+            }
+
+            _addCentroidSource(sourceId, year) {
+                // Add centroids for low zoom level
+                if (!this.map.getSource(sourceId)) {
+                    this.map.addSource(sourceId, {
+                        type: 'geojson',
+                        data: this.config.urls.wfs_centroid(year),
+                        cluster: true,
+                        clusterMaxZoom: 15,
+                        clusterRadius: this.config.clusterStyle.radius,
+                        attribution: 'Sepin, Vashold, and Kuschnig (<a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">2025</a>)'
+                    });
+                }
+            }
+
+            _addClusterLayers(sourceId) {
+                // Remove existing cluster layers if any exist
+                if (this.map.getLayer('clusters')) {
+                    const clusterLayerIds = ['clusters', 'clusters-count', 'clusters-point'];
+                    this._removeMapLayers(clusterLayerIds);
+                }
+                // Add cluster circle layer
+                this.map.addLayer({
+                    id: 'clusters',
+                    type: 'circle',
+                    source: sourceId,
+                    minzoom: 0,
+                    maxzoom: this.config.map.maxZoomClusters,
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': [
+                            'step',
+                            ['get', 'point_count'],
+                            this.config.clusterStyle.colors[0],
+                            this.config.clusterStyle.thresholds[0], this.config.clusterStyle.colors[1],
+                            this.config.clusterStyle.thresholds[1], this.config.clusterStyle.colors[2]
+                        ],
+                        'circle-radius': [
+                            'step',
+                            ['get', 'point_count'],
+                            this.config.clusterStyle.radiusSizes[0],
+                            this.config.clusterStyle.thresholds[0], this.config.clusterStyle.radiusSizes[1],
+                            this.config.clusterStyle.thresholds[1], this.config.clusterStyle.radiusSizes[2]
+                        ]
+                    },
+                });
+
+                // Add cluster count layer
+                this.map.addLayer({
+                    id: 'clusters-count',
+                    type: 'symbol',
+                    source: sourceId,
+                    minzoom: 0,
+                    maxzoom: this.config.map.maxZoomClusters,
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': '{point_count_abbreviated}',
+                        'text-font': ['Open Sans Regular'],
+                        'text-size': 12
+                    }
+                });
+
+                // Add unclustered point layer
+                this.map.addLayer({
+                    id: 'clusters-point',
+                    type: 'circle',
+                    source: sourceId,
+                    minzoom: 0,
+                    maxzoom: this.config.map.maxZoomClusters,
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': this.config.clusterStyle.colors[0],
+                        'circle-radius': 4,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
+            }
+
+            _addPolygonSource(sourceId) {
+                if (!this.map.getSource(sourceId)) {
+                    this.map.addSource(sourceId, {
+                        type: 'geojson',
+                        data: { type: 'FeatureCollection', features: [] },
+                        attribution: 'Sepin, Vashold, and Kuschnig (<a href="https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf">2025</a>)'
+                    });
+                }
+            }
+
+            _addPolygonLayers(sourceId, year) {
+                const yearColor = Utils.getYearColor(year);
+
+                // Add fill and outline layers only if they don't exist
+                if (!this.map.getLayer(`polygon-fill-${year}`)) {
+                    this.map.addLayer({
+                        id: `polygon-fill-${year}`,
+                        type: 'fill',
+                        source: sourceId,
+                        minzoom: this.config.map.minZoomPolygons,
+                        maxzoom: 20,
+                        paint: {
+                            'fill-color': '#efefef',
+                            'fill-opacity': 0.05
+                        }
+                    });
+
+                    // Outer line layer
+                    this.map.addLayer({
+                        id: `polygon-line2-${year}`,
+                        type: 'line',
+                        source: sourceId,
+                        minzoom: this.config.map.minZoomPolygons,
+                        maxzoom: 20,
+                        paint: {
+                            'line-color': '#000000',
+                            'line-width': 4,
+                            'line-opacity': 0.5
+                        }
+                    });
+
+                    // Inner line layer
+                    this.map.addLayer({
+                        id: `polygon-line-${year}`,
+                        type: 'line',
+                        source: sourceId,
+                        minzoom: this.config.map.minZoomPolygons,
+                        maxzoom: 20,
+                        paint: {
+                            'line-color': yearColor,
+                            'line-width': 2,
+                            'line-opacity': 1
+                        }
+                    });
+                }
+            }
+
+            _setupEventHandlers(sourceId, wfsSourceId, year) {
+                // Setup cluster click handler
+                this._setupClusterClickHandler(sourceId);
+
+                // Setup polygon click handler
+                this._setupPolygonClickHandler(year);
+
+                // Setup cursor effects
+                this._setupCursorEffects(year);
+
+                // Setup data loading on map move/zoom
+                this._setupDataLoadingEvents(wfsSourceId, year);
+            }
+
+            _setupClusterClickHandler(sourceId) {
+                this.map.on('click', 'clusters', async (e) => {
+                    try {
+                        const features = this.map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+                        const clusterId = features[0].properties.cluster_id;
+                        const zoom = await this.map.getSource(sourceId).getClusterExpansionZoom(clusterId);
+                        this.map.easeTo({
+                            center: features[0].geometry.coordinates,
+                            zoom: Math.min(zoom * 1.05, 10.5),
+                            duration: 1000,
+                            easing: t => t < 0.5 ? 4*t*t*t : 1-(--t)*t*t*t*4,
+                            essential: true
+                        });
+                    } catch (error) {
+                        console.error('Error expanding cluster:', error);
+                    }
+                });
+            }
+
+            _setupPolygonClickHandler(year) {
+                this.map.on('click', `polygon-fill-${year}`, async (e) => {
+                    try {
+                        const feature = e.features[0];
+                        const props = feature.properties;
+                        const coords = [e.lngLat.lng, e.lngLat.lat];
+                        const content = Utils.createPopupContent(props, e.lngLat);
+
+                        new maplibregl.Popup()
+                            .setLngLat(coords)
+                            .setHTML(content)
+                            .addTo(this.map);
+
+                        this.map.easeTo({
+                            center: coords,
+                            duration: 1000,
+                            easing: t => t * (2 - t),
+                            essential: true
+                        });
+                    } catch (error) {
+                        console.error('Error displaying overlay:', error);
+                    }
+                });
+            }
+
+            _setupCursorEffects(year) {
+                // Cursor effects for clusters
+                this.map.on('mouseenter', 'clusters', () => {
+                    this.map.getCanvas().style.cursor = 'pointer';
+                });
+                this.map.on('mouseleave', 'clusters', () => {
+                    this.map.getCanvas().style.cursor = '';
+                });
+
+                // Cursor effects for polygons
+                this.map.on('mouseenter', `polygon-fill-${year}`, () => {
+                    this.map.getCanvas().style.cursor = 'pointer';
+                });
+                this.map.on('mouseleave', `polygon-fill-${year}`, () => {
+                    this.map.getCanvas().style.cursor = '';
+                });
+            }
+
+            _setupDataLoadingEvents(sourceId, year) {
+                // Create handler function for loading data
+                const loadWfsForViewport = () => this._loadWfsDataForViewport(sourceId, year);
+
+                // Remove previous handlers if they exist
+                if (this.moveEndHandlers[year]) {
+                    this.map.off('moveend', this.moveEndHandlers[year]);
+                    this.map.off('zoomend', this.moveEndHandlers[year]);
+                }
+
+                // Create debounced handler
+                this.moveEndHandlers[year] = Utils.debounce(loadWfsForViewport, 100);
+
+                // Add event listeners
+                this.map.on('moveend', this.moveEndHandlers[year]);
+                this.map.on('zoomend', this.moveEndHandlers[year]);
+
+                // Initial load if zoom level is sufficient
+                if (this.map.getZoom() >= this.config.map.minZoomPolygons) {
+                    loadWfsForViewport();
+                }
+            }
+
+            _loadWfsDataForViewport(sourceId, year) {
+                // Skip if layer is not active or zoom level is too low
+                const zoom = this.map.getZoom();
+                if (!this.activeLayers.has(year.toString()) || zoom < this.config.map.minZoomPolygons) {
+                    return;
+                }
+
+                // Get viewport bounds
+                const bounds = this.map.getBounds();
+                const sw = bounds.getSouthWest();
+                const ne = bounds.getNorthEast();
+
+                // Create CQL filter with bbox and exclude already loaded features
+                let cqlFilter = `year=${year} AND BBOX(geom,${sw.lng},${sw.lat},${ne.lng},${ne.lat},'EPSG:4326')`;
+
+                // Add exclusion for already loaded features if we have any
+                // if (this.loadedFeatureIds[year] && this.loadedFeatureIds[year].size > 0) {
+                //     const loadedIds = Array.from(this.loadedFeatureIds[year]).join(',');
+                //     cqlFilter += ` AND NOT (id IN (${loadedIds}))`;
+                // }
+
+                // Create URL with CQL_FILTER
+                const baseUrl = this.config.urls.wfs(year).split('CQL_FILTER=')[0];
+                const url = `${baseUrl}CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+
+                // Cancel previous request if exists
+                if (this.pendingRequests && this.pendingRequests[year]) {
+                    this.pendingRequests[year].abort();
+                }
+
+                // Make request with abort controller
+                const controller = new AbortController();
+                if (!this.pendingRequests) {
+                    this.pendingRequests = {};
+                }
+                this.pendingRequests[year] = controller;
+
+                fetch(url, { signal: controller.signal })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Filter out features we already have
+                        const newFeatures = data.features.filter(feature => {
+                            if (!feature.id || (this.loadedFeatures[year] && this.loadedFeatures[year].has(feature.id))) {
+                                return false;
+                            }
+                            this.loadedFeatures[year].add(feature.id);
+                            if (feature.id && this.loadedFeatureIds[year]) {
+                                this.loadedFeatureIds[year].add(feature.id);
+                            }
+                            return true;
+                        });
+
+                        // Get existing features
+                        const source = this.map.getSource(sourceId);
+                        const existingData = source._data || { type: 'FeatureCollection', features: [] };
+
+                        // Merge with existing features
+                        const mergedFeatures = [...existingData.features, ...newFeatures];
+
+                        // Update source with merged features
+                        source.setData({
+                            type: 'FeatureCollection',
+                            features: mergedFeatures
+                        });
+
+                        delete this.pendingRequests[year];
+                    })
+                    .catch(error => {
+                        if (error.name !== 'AbortError') {
+                            console.error(`Error loading WFS data for year ${year}:`, error);
+                        }
+                        delete this.pendingRequests[year];
+                    });
+            }
+
+            _removeMapLayers(layerIds) {
+                layerIds.forEach(id => {
+                    if (this.map.getLayer(id)) {
+                        this.map.removeLayer(id);
+                    }
+                });
+            }
+
+            _cleanupEventHandlers(year) {
+                // Clean up event handlers
+                if (this.moveEndHandlers && this.moveEndHandlers[year]) {
+                    this.map.off('moveend', this.moveEndHandlers[year]);
+                    this.map.off('zoomend', this.moveEndHandlers[year]);
+                    delete this.moveEndHandlers[year];
+                }
+
+                // Clear timers
+                if (this.debounceTimers && this.debounceTimers[year]) {
+                    clearTimeout(this.debounceTimers[year]);
+                    delete this.debounceTimers[year];
+                }
+
+                // Abort pending requests
+                if (this.pendingRequests && this.pendingRequests[year]) {
+                    this.pendingRequests[year].abort();
+                    delete this.pendingRequests[year];
+                }
+            }
+        }
+
+        // UIManager handles the user interface interactions
+        class UIManager {
+            constructor(map, config, basemapManager, layerManager) {
+                this.map = map;
+                this.config = config;
+                this.basemapManager = basemapManager;
+                this.layerManager = layerManager;
+                this.generateControls();
+                this.setupEventListeners();
+            }
+
+            generateControls() {
+                // Generate basemap controls
+                const baseMapControls = document.getElementById('baseMapControls');
+                baseMapControls.innerHTML = `
+                    <div>
+                        <input type="radio" id="baseReactive" name="baseMap" value="${this.config.defaultYear}" checked>
+                        <label for="baseReactive">Satellite (Adaptive)</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="baseYear" name="baseMap" value="${this.config.defaultYear}">
+                        <label for="baseYear">Satellite:</label>
+                        <select id="yearSelect" name="yearSelect">
+                            ${this.config.years.basemap.map(year =>
+                            `<option value="${year}" ${year === this.config.defaultYear ? 'selected' : ''}>${year}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <input type="radio" id="baseThunder" name="baseMap" value="0">
+                        <label for="baseThunder">Thunderforest</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="baseOSM" name="baseMap" value="1">
+                        <label for="baseOSM">OpenStreetMap</label>
+                    </div>
+                `;
+
+                // Generate year checkbox controls
+                const wmsControls = document.getElementById('wmsControls');
+                this.config.years.polygons.forEach(year => {
+                    const div = document.createElement('div');
+                    const yearColor = Utils.getYearColor(year);
+                    div.innerHTML = `
+                        <input type="checkbox" id="wms${year}" value="${year}" ${year == this.config.defaultYear ? 'checked' : ''}>
+                        <span class="year-color-circle" style="background-color: ${yearColor};"></span>
+                        <label for="wms${year}">${year}</label>
+                    `;
+                    wmsControls.appendChild(div);
+                });
+            }
+
+            setupEventListeners() {
+                // Radio button event listener for basemap selection
+                document.querySelectorAll('input[name="baseMap"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        const value = e.target.value;
+                        if (value === "0") {
+                            this.basemapManager.update('thunderforest');
+                        } else if (value === "1") {
+                            this.basemapManager.update('osm');
+                        } else {
+                            this.basemapManager.update('sentinel', value);
+                        }
+                    });
+                });
+
+                // Dropdown event listener for year selection
+                document.getElementById('yearSelect').addEventListener('change', (e) => {
+                    const year = e.target.value;
+                    document.getElementById('baseYear').value = year;
+                    this.basemapManager.update('sentinel', year);
+                });
+
+                // Checkboxes event listener for polygon layers
+                document.querySelectorAll('#wmsControls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const year = e.target.value;
+                        if (e.target.checked) {
+                            this.layerManager.activeLayers.add(year);
+                            this.layerManager.addYearLayer(year);
+
+                            // Update adaptive basemap if enabled
+                            if (document.getElementById('baseReactive').checked) {
+                                document.getElementById('baseReactive').value = year;
+                                this.basemapManager.update('sentinel', year);
+
+                                // Update the value and label on the dropdown
+                                if (year == 2017) {
+                                    document.getElementById('baseYear').value = 2016;
+                                    document.getElementById('yearSelect').value = 2016;
+                                } else {
+                                    document.getElementById('baseYear').value = year;
+                                    document.getElementById('yearSelect').value = year;
+                                }
+                            }
+                        } else {
+                            this.layerManager.activeLayers.delete(year);
+                            this.layerManager.removeYearLayer(year);
+                        }
+                    });
+                });
+            }
+        }
+
+                // Main Application Controller
+        class MiningMapApp {
+            constructor(config) {
+                this.config = config;
+                this.initializeMap();
+            }
+
+            initializeMap() {
+                // Create basemap manager to set up initial sources
+                const tempBasemapManager = new BasemapManager(null, this.config);
+                const sources = tempBasemapManager.setupSources();
+
+                // Initialize map
+                this.map = new maplibregl.Map({
+                    container: 'map',
+                    style: {
+                        version: 8,
+                        sources: sources,
+                        layers: [{
+                            id: 's2maps-layer',
+                            type: 'raster',
+                            source: 's2maps',
+                            minzoom: 0,
+                            maxzoom: 20
+                        }],
+                        glyphs: 'http://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+                    },
+                    center: [-40, 0],
+                    zoom: 4,
+                    attributionControl: false
+                });
+                this.map.addControl(new maplibregl.AttributionControl(), 'bottom-left');
+
+
+                // Set up managers after map is created
+                this.basemapManager = new BasemapManager(this.map, this.config);
+                this.layerManager = new LayerManager(this.map, this.config);
+                this.uiManager = new UIManager(this.map, this.config, this.basemapManager, this.layerManager);
+
+                // Set up map event handlers
+                this.map.on("load", () => this._onMapLoad());
+                this.map.on("style.load", () => this.map.setProjection({ type: 'globe' }));
+            }
+
+            _onMapLoad() {
+                // Add default year layer
+                this.layerManager.addYearLayer(this.config.defaultYear);
+
+                // Zoom into initial view
+                this.map.flyTo({
+                    center: this.config.initialView.center,
+                    zoom: this.config.initialView.zoom,
+                    duration: 12000,
+                    essential: true,
+                    easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+                });
+            }
+        }
+
+        // Initialize application
+        const app = new MiningMapApp(CONFIG);
     </script>
 </body>
-
 </html>
-
