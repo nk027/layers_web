@@ -5,14 +5,19 @@
     <title>Mapping Mining Areas in the Tropics from 2016–2024</title>
     <meta charset='utf-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="preload" href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css" as="style">
+    <link rel="preload" href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js" as="script">
+
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css" />
     <script src="https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/maplibre-gl-basemaps@1.1.0/dist/basemaps.js"></script>
-        <style>
+
+    <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif;
+            font-weight: normal;
             color: #333;
         }
         html, body, #map {
@@ -295,8 +300,8 @@
                 radiusSizes: [20, 30, 40]
             },
             map: {
-                minZoomPolygons: 10,
-                maxZoomClusters: 10
+                minZoomPolygons: 8.5,
+                maxZoomClusters: 8.5
             }
         };
 
@@ -368,6 +373,16 @@
                         tiles: [this.config.urls.basemap.thunderforest],
                         tileSize: 512,
                         attribution: 'Maps © <a href="https://www.thunderforest.com/">Thunderforest</a>, Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+                    },
+                    terrain: {
+                        type: 'raster-dem',
+                        tiles: [this.config.urls.basemap.terrain],
+                        tileSize: 256,
+                    },
+                    hills: {
+                        type: 'raster-dem',
+                        tiles: [this.config.urls.basemap.terrain],
+                        tileSize: 256,
                     }
                 };
             }
@@ -428,9 +443,9 @@
                 const sourceId = `geoserver-${year}`;
                 const wfsSourceId = `geoserver-wfs-${year}`;
 
-                this._initializeTrackingForYear(year);
                 this._addCentroidSource(sourceId, year);
                 this._addClusterLayers(sourceId);
+                this._initializeTrackingForYear(year);
                 this._addPolygonSource(wfsSourceId);
                 this._addPolygonLayers(wfsSourceId, year);
                 this._setupEventHandlers(sourceId, wfsSourceId, year);
@@ -918,21 +933,22 @@
                     style: {
                         version: 8,
                         sources: sources,
-                        layers: [{
-                            id: 's2maps-layer',
-                            type: 'raster',
-                            source: 's2maps',
-                            minzoom: 0,
-                            maxzoom: 20
-                        }],
+                        layers: [
+                            {
+                                id: 's2maps-layer',
+                                type: 'raster',
+                                source: 's2maps',
+                                minzoom: 0,
+                                maxzoom: 20
+                            },
+                        ],
                         glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
                     },
-                    center: [-40, 0],
+                    center: [0, 0],
                     zoom: 4,
-                    attributionControl: false
+                    attributionControl: false,
+                    hash: 'mapState',
                 });
-                this.map.addControl(new maplibregl.AttributionControl(), 'bottom-left');
-
 
                 // Set up managers after map is created
                 this.basemapManager = new BasemapManager(this.map, this.config);
@@ -941,14 +957,14 @@
 
                 // Set up map event handlers
                 this.map.on("load", () => this._onMapLoad());
-                this.map.on("style.load", () => this.map.setProjection({ type: 'globe' }));
+                this.map.on("style.load", () => this._onStyleLoad());
             }
 
-            _onMapLoad() {
-                // Add default year layer
-                this.layerManager.addYearLayer(this.config.defaultYear);
+            async _onMapLoad() {
+                this.map.setProjection({ type: 'globe' });
 
-                // Zoom into initial view
+                await this.layerManager.addYearLayer(this.config.defaultYear);
+                console.log("Initial layers loaded, executing flyTo.");
                 this.map.flyTo({
                     center: this.config.initialView.center,
                     zoom: this.config.initialView.zoom,
@@ -956,6 +972,18 @@
                     essential: true,
                     easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
                 });
+            };
+
+            _onStyleLoad() {
+                console.log("Style loaded, initializing controls.");
+                this.map.addControl(new maplibregl.AttributionControl(), 'bottom-left');
+                this.map.addControl(new maplibregl.NavigationControl({
+                    visualizePitch: true,
+                    visualizeRoll: true,
+                    showZoom: true,
+                    showCompass: true,
+                }), 'top-right');
+                this.map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
             }
         }
 
