@@ -967,13 +967,15 @@
 
                 await this.layerManager.addYearLayer(this.config.defaultYear);
                 console.log("Initial layers loaded, executing flyTo.");
-                this.map.flyTo({
-                    center: this.config.initialView.center,
-                    zoom: this.config.initialView.zoom,
-                    duration: 12000,
-                    essential: true,
-                    easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
-                });
+                setTimeout(() => {
+                    this.map.flyTo({
+                        center: this.config.initialView.center,
+                        zoom: this.config.initialView.zoom,
+                        duration: 12000,
+                        essential: true,
+                        easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+                    });
+                }, 1000);
             };
 
             _onStyleLoad() {
@@ -985,7 +987,11 @@
                     showZoom: true,
                     showCompass: true,
                 }), 'top-right');
-                this.map.addControl(new maplibregl.GlobeControl(), 'bottom-left');
+                this.map.addControl(new maplibregl.GlobeControl(), 'top-right');
+                this.map.addControl(new maplibregl.ScaleControl({
+                    maxWidth: 80,
+                    unit: 'metric'
+                }), 'bottom-left');
             }
         }
 
