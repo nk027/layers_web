@@ -281,9 +281,11 @@
             ],
             urls: {
                 basemap: {
-                    s2_2016: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg',
-                    s2_standard: (year) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-${year}_3857/default/g/{z}/{y}/{x}.jpg`,
-                    terrain: 'https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg',
+                    // s2_2016: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg',
+                    // s2_standard: (year) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-${year}_3857/default/g/{z}/{y}/{x}.jpg`,
+                    s2_2016: 'https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless_3857&styles=&format=image/jpeg&transparent=false&version=1.1.0&width=512&height=512&srs=EPSG:3857&bbox={bbox-epsg-3857}',
+                    s2_standard: (year) => `https://tiles.maps.eox.at/wms?service=WMS&request=GetMap&layers=s2cloudless-${year}_3857&styles=&format=image/jpeg&transparent=false&version=1.1.1&width=512&height=512&srs=EPSG:3857&bbox={bbox-epsg-3857}`,
+                    terrain: 'https://tiles.maps.eox.at/wtms/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg',
                     osm: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     thunderforest: 'https://tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=37cf66b77198486e8a2eb0e63080634f'
                 },
