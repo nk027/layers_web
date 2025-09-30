@@ -6,13 +6,14 @@ In the project *Layers of Natural Resource Extraction*, we develop and apply new
 
 # Research
 
+
+- *Sepin, P.*, *Kuschnig, N.*, and *Vashold, L.*: Mapping Mining Areas in the Tropics from 2016–2024. [Working Paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), [Interactive Map](https://www.layers.at/pages/mine_map.html), Forthcoming at *Nature Sustainability*.
+
+- *Luckeneder, S.*, Maus, V., Siqueira-Gay, J. Krisztin, T., and Kuhn, M.: Forest Loss and Uncertain Economic Gains from Industrial and Garimpo Mining in Brazilian Municipalities. *Nature Communications*, <b>16</b>, 6543, DOI: [10.1038/s41467-025-61930-8](https://doi.org/10.1038/s41467-025-61930-8).
+
 - *Kuschnig, N.*, *Vashold, L.*, Soterroni, A., and Obersteiner, M. (2023). Eroding Resilience of Deforestation Interventions — Evidence from Brazil’s Lost Decade. *Environmental Research Letters*, <b>18</b>(7):074039, DOI: [10.1088/1748-9326/acdfe7](https://doi.org/10.1088/1748-9326/acdfe7).
 
 ## Work-in-progress
-
-- *Luckeneder, S.*, Maus, V., Siqueira-Gay, J. Krisztin, T., and Kuhn, M.: Transient Economic Benefit and Persistent Forest Loss: Legacy of the Brazilian Mining Sector Across Regions. R&R at *Nature Communications*.
-
-- *Sepin, P.*, *Kuschnig, N.*, and *Vashold, L.*: Mapping Mining Areas in the Tropics from 2016–2024. [Working Paper](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf), [Interactive Map](https://www.layers.at/pages/mine_map.html), R&R at *Nature Sustainability*.
 
 - *Vashold, L.*, *Pirich, G.*, *Heinze, M.*, and *Kuschnig, N.*: Mines–Rivers–Yields: Downstream Impacts of Mines on Agriculture in Africa. [Working Paper](https://www.kuschnig.eu/files/wp_mine-basins_wip.pdf), R&R at the *Journal of Development Economics*.
 
@@ -26,7 +27,7 @@ In the project *Layers of Natural Resource Extraction*, we develop and apply new
 - [Stefan Giljum](https://www.wu.ac.at/ecolecon/institute/team/sgiljum/) – Principal Investigator
 - [Lukas Vashold](https://www.vashold.eu/) – Researcher
 - [Sebastian Luckeneder](https://sluckeneder.github.io/) – Researcher
-- [Maximilian Heinze](https://maxmheinze.github.io/) – Research Assistant
+- [Maximilian Heinze](https://maxheinze.eu/) – Research Assistant
 - Philipp Sepin – Research Assistant
 - Gustav Pirich – Research Assistant
 
