@@ -968,16 +968,16 @@
                 this.map.setProjection({ type: 'globe' });
                 await this.layerManager.addYearLayer(this.config.defaultYear);
 
-                console.log("Initial layers loaded, executing flyTo.");
-                setTimeout(() => {
-                    this.map.flyTo({
-                        center: this.config.initialView.center,
-                        zoom: this.config.initialView.zoom,
-                        duration: 12000,
-                        essential: true,
-                        easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
-                    });
-                }, 1000);
+                // console.log("Initial layers loaded, executing flyTo.");
+                // setTimeout(() => {
+                //    this.map.flyTo({
+                //        center: this.config.initialView.center,
+                //        zoom: this.config.initialView.zoom,
+                //        duration: 12000,
+                //        essential: true,
+                //        easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+                //    });
+                // }, 1000);
             };
 
             _onStyleLoad() {
