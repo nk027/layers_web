@@ -34,18 +34,23 @@ const EventViewer = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
+  // Navigation
+  const [selectedEventIndex, setSelectedEventIndex] = useState(null);
+
+  // Tag filtering
+  const PRESET_TAGS = ["DeHiPE", "IOAT", "ATIO"];
+  const [allTags, setAllTags] = useState(new Set(PRESET_TAGS));
+  const [selectedTags, setSelectedTags] = useState(new Set());
 
   // Pre-configured ICS sources
   const DEFAULT_SOURCES = [
     {
       name: 'Monash Econ',
       url: './ics/ICS_econ.ics'
-      // url: 'https://calendar.google.com/calendar/ical/2rnbhi06i37jfdmprrls497vr8%40group.calendar.google.com/public/basic.ics'
     },
     {
       name: 'Monash EBS',
       url: './ics/ICS_ebs.ics'
-      // url: 'https://calendar.google.com/calendar/ical/monash.edu_oh4b3l045bt5nm75tnlnt1gv5s%40group.calendar.google.com/public/basic.ics'
     },
     {
       name: 'UniMelb EE',
@@ -59,6 +64,31 @@ const EventViewer = () => {
       loadICSFromURL(url, name);
     });
   }, []);
+
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedEvent(null);
+        setSelectedEventIndex(null);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = (selectedEventIndex + 1) % filteredEvents.length;
+        setSelectedEventIndex(nextIndex);
+        setSelectedEvent(filteredEvents[nextIndex]);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = (selectedEventIndex - 1 + filteredEvents.length) % filteredEvents.length;
+        setSelectedEventIndex(prevIndex);
+        setSelectedEvent(filteredEvents[prevIndex]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedEvent, selectedEventIndex, filteredEvents]);
+
 
   // Parse ICS content with proper line folding support
   const parseICS = (content, sourceName) => {
@@ -292,14 +322,44 @@ const EventViewer = () => {
       return newSet;
     });
   };
+  const handleSourceDoubleClick = (source) => {
+    setSelectedSources(new Set([source]));
+  };
+
+  const toggleTag = (tag) => {
+    setSelectedTags(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tag)) {
+        newSet.delete(tag);
+      } else {
+        newSet.add(tag);
+      }
+      return newSet;
+    });
+  };
+  const handleTagDoubleClick = (tag) => {
+    setSelectedTags(new Set([tag]));
+  };
 
   const filterEvents = () => {
-    let filtered = events.filter(event =>
-      selectedSources.has(event.source) &&
-     (searchTerm === '' ||
-        event.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase())))
-    );
+    let filtered = events.filter(event => {
+      if (!selectedSources.has(event.source)) {
+        return false;
+      }
+
+      const summaryLower = event.summary.toLowerCase();
+      const descriptionLower = (event.description || '').toLowerCase();
+      const eventText = summaryLower + ' ' + descriptionLower;
+
+      const searchMatch = searchTerm === '' ||
+        summaryLower.includes(searchTerm.toLowerCase()) ||
+        descriptionLower.includes(searchTerm.toLowerCase());
+
+      const tagMatch = selectedTags.size === 0 ||
+        [...selectedTags].some(tag => eventText.includes(tag.toLowerCase()));
+
+      return searchMatch && tagMatch;
+    });
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -479,13 +539,6 @@ const EventViewer = () => {
                   className="hidden"
                 />
               </label>
-              <button
-                onClick={handleAddICSURL}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <Plus size={20} />
-                Add ICS URL
-              </button>
             </div>
           </div>
 
@@ -560,6 +613,28 @@ const EventViewer = () => {
                         }`}
                       >
                         {source}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {[...allTags].sort().map(tag => {
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        onDoubleClick={() => handleTagDoubleClick(tag)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedTags.has(tag)
+                            ? 'bg-indigo-100 text-indigo-800'
+                            : 'bg-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {tag}
                       </button>
                     );
                   })}
@@ -760,7 +835,7 @@ const EventViewer = () => {
                       <ChevronLeft size={20} />
                     </button>
                     <h2 className="text-xl font-bold">
-                      {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      {currentDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}
                     </h2>
                     <button
                       onClick={() => navigateMonth(1)}
@@ -885,6 +960,12 @@ const EventViewer = () => {
             </div>
           )}
         </div>
+
+        <footer className="text-center p-6 text-sm text-gray-500">
+          <p>Event data is provided "as is".</p>
+          <p>Contact: <a href="mailto:nikolas.kuschnig@monash.edu" className="text-blue-600 hover:underline">nikolas.kuschnig@monash.edu</a></p>
+        </footer>
+
       </div>
     </div>
   );
