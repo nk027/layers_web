@@ -1,4 +1,4 @@
-name: Run-Daily
+name: Update ICS
 
 on:
   schedule:
@@ -9,7 +9,7 @@ jobs:
   run-script:
     runs-on: ubuntu-latest
     permissions: 
-    - contents: write
+      contents: write
 
     steps:
     - name: Checkout
