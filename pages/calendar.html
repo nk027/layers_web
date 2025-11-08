@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+// Simple icon components
+const Calendar = () => <span>📅</span>;
+const List = () => <span>📋</span>;
+const Upload = () => <span>📤</span>;
+const Search = () => <span>🔍</span>;
+const Filter = () => <span>🔽</span>;
+const Plus = () => <span>➕</span>;
+const ChevronLeft = () => <span>◀</span>;
+const ChevronRight = () => <span>▶</span>;
+
+const EventViewer = () => {
+  const [events, setEvents] = useState([]);
+  const [sources, setSources] = useState([]);
+  const [view, setView] = useState('list');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSources, setSelectedSources] = useState(new Set());
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateFilter, setDateFilter] = useState('upcoming');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  // Pre-configured ICS sources
+  const DEFAULT_SOURCES = [
+    {
+      name: 'Monash Econ',
+      url: './ics/ICS_econ.ics'
+      // url: 'https://calendar.google.com/calendar/ical/2rnbhi06i37jfdmprrls497vr8%40group.calendar.google.com/public/basic.ics'
+    },
+    {
+      name: 'Monash EBS',
+      url: './ics/ICS_ebs.ics'
+      // url: 'https://calendar.google.com/calendar/ical/monash.edu_oh4b3l045bt5nm75tnlnt1gv5s%40group.calendar.google.com/public/basic.ics'
+    },
+    {
+      name: 'UniMelb EE',
+      url: './ics/ICS_unimelb-ee.ics'
+    }
+  ];
+
+  // Load default sources on mount
+  useEffect(() => {
+    DEFAULT_SOURCES.forEach(({ name, url }) => {
+      loadICSFromURL(url, name);
+    });
+  }, []);
+
+  // Parse ICS content with proper line folding support
+  const parseICS = (content, sourceName) => {
+  // Handle line folding
+  const rawLines = content.split(/\r?\n/);
+  const unfoldedLines = [];
+  let currentLine = '';
+
+  for (const rawLine of rawLines) {
+    if (rawLine.length > 0 && (rawLine[0] === ' ' || rawLine[0] === '\t')) {
+      currentLine += rawLine.substring(1);
+    } else {
+      if (currentLine) unfoldedLines.push(currentLine);
+      currentLine = rawLine;
+    }
+  }
+  if (currentLine) unfoldedLines.push(currentLine);
+
+  // Clean text and preserve useful HTML
+  const cleanText = (text) => {
+    return text
+      // ICS unescaping
+      .replace(/\\n/g, '\n')
+      .replace(/\\,/g, ',')
+      .replace(/\\;/g, ';')
+      .replace(/\\\\/g, '\\')
+      // Convert <br> tags to newlines
+      .replace(/<br\s*\/?>/gi, '\n')
+      // Extract and preserve links from <a> tags
+      .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi, '<a href="$1">$2</a>')
+      // Strip remaining HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Unescape HTML entities
+      .replace(/&nbsp;?/gi, ' ')
+      .replace(/&amp;?/gi, '&')
+      .replace(/&lt;?/gi, '<')
+      .replace(/&gt;?/gi, '>')
+      .replace(/&quot;?/gi, '"')
+      .replace(/&#39;?/gi, "'")
+      // Convert plain URLs to links
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>')
+      // Convert emails to mailto links
+      .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1">$1</a>')
+      .trim();
+  };
+
+  // Extract value from field, handling parameters like DTSTART;TZID=...
+  const extractValue = (line, prefix) => {
+    const colonIndex = line.indexOf(':');
+    return colonIndex > 0 ? line.substring(colonIndex + 1) : '';
+  };
+
+  const events = [];
+  let currentEvent = null;
+  let inEvent = false;
+
+  for (const line of unfoldedLines) {
+    const trimmedLine = line.trim();
+
+    if (trimmedLine === 'BEGIN:VEVENT') {
+      inEvent = true;
+      currentEvent = { source: sourceName };
+    } else if (trimmedLine === 'END:VEVENT' && currentEvent) {
+      if (currentEvent.start && currentEvent.summary) {
+        events.push(currentEvent);
+      }
+      currentEvent = null;
+      inEvent = false;
+    } else if (inEvent && currentEvent) {
+      if (trimmedLine.startsWith('SUMMARY:')) {
+        currentEvent.summary = cleanText(trimmedLine.substring(8));
+      } else if (trimmedLine.startsWith('DTSTART')) {
+        const dateStr = extractValue(trimmedLine, 'DTSTART');
+        currentEvent.start = parseICSDate(dateStr);
+      } else if (trimmedLine.startsWith('DTEND')) {
+        const dateStr = extractValue(trimmedLine, 'DTEND');
+        currentEvent.end = parseICSDate(dateStr);
+      } else if (trimmedLine.startsWith('DESCRIPTION:')) {
+        currentEvent.description = cleanText(trimmedLine.substring(12));
+      } else if (trimmedLine.startsWith('LOCATION:')) {
+        currentEvent.location = cleanText(trimmedLine.substring(9));
+      }
+    }
+  }
+
+  return events;
+};
+
+    const parseICSDate = (dateStr) => {
+    if (!dateStr) return null;
+
+    // Handle DATE format (YYYYMMDD)
+    if (dateStr.length === 8) {
+      const year = dateStr.substring(0, 4);
+      const month = dateStr.substring(4, 6);
+      const day = dateStr.substring(6, 8);
+      // return new Date(year, parseInt(month) - 1, day);
+      return new Date(year, parseInt(month) - 1, day);
+    }
+
+    // Handle DATETIME format
+    const isUTC = dateStr.endsWith('Z');
+    const cleanDate = dateStr.replace(/[TZ]/g, '');
+    const year = cleanDate.substring(0, 4);
+    const month = cleanDate.substring(4, 6);
+    const day = cleanDate.substring(6, 8);
+    const hour = cleanDate.substring(8, 10) || '00';
+    const minute = cleanDate.substring(10, 12) || '00';
+    const second = cleanDate.substring(12, 14) || '00';
+
+    return new Date(Date.UTC(year, parseInt(month) - 1, day, hour, minute, second));
+    if (isUTC) {
+      return new Date(Date.UTC(year, parseInt(month) - 1, day, hour, minute, second));
+    } else {
+      return new Date(year, parseInt(month) - 1, day, hour, minute, second);
+    }
+  };
+
+// Helper to get a YYYY-MM-DD string in the user's local timezone
+  const getLocalDateKey = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Generate consistent color for each source
+  const getSourceColor = (source) => {
+    const colors = [
+      { bg: 'bg-blue-100', border: 'border-blue-600', text: 'text-blue-800', hover: 'hover:bg-blue-200' },
+      { bg: 'bg-green-100', border: 'border-green-600', text: 'text-green-800', hover: 'hover:bg-green-200' },
+      { bg: 'bg-purple-100', border: 'border-purple-600', text: 'text-purple-800', hover: 'hover:bg-purple-200' },
+      { bg: 'bg-orange-100', border: 'border-orange-600', text: 'text-orange-800', hover: 'hover:bg-orange-200' },
+      { bg: 'bg-pink-100', border: 'border-pink-600', text: 'text-pink-800', hover: 'hover:bg-pink-200' },
+      { bg: 'bg-indigo-100', border: 'border-indigo-600', text: 'text-indigo-800', hover: 'hover:bg-indigo-200' },
+      { bg: 'bg-red-100', border: 'border-red-600', text: 'text-red-800', hover: 'hover:bg-red-200' },
+      { bg: 'bg-teal-100', border: 'border-teal-600', text: 'text-teal-800', hover: 'hover:bg-teal-200' },
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = ((hash << 5) - hash) + source.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target.result;
+      const sourceName = file.name.replace('.ics', '');
+      const parsed = parseICS(content, sourceName);
+
+      setEvents(prev => [...prev, ...parsed]);
+      setSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return Array.from(newSet);
+      });
+      setSelectedSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return newSet;
+      });
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const loadICSFromURL = async (url, sourceName) => {
+    try {
+      const response = await fetch(url);
+      const content = await response.text();
+      const parsed = parseICS(content, sourceName);
+
+      setEvents(prev => [...prev, ...parsed]);
+      setSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return Array.from(newSet);
+      });
+      setSelectedSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return newSet;
+      });
+    } catch (error) {
+      console.error(`Failed to load ICS from ${url}:`, error);
+      alert(`Failed to load calendar: ${sourceName}`);
+    }
+  };
+
+  const handleAddICSURL = async () => {
+    const url = prompt('Enter ICS URL or paste ICS content:');
+    if (!url) return;
+
+    const sourceName = prompt('Enter a name for this calendar source:');
+    if (!sourceName) return;
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      await loadICSFromURL(url, sourceName);
+    } else {
+      const parsed = parseICS(url, sourceName);
+      setEvents(prev => [...prev, ...parsed]);
+      setSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return Array.from(newSet);
+      });
+      setSelectedSources(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceName);
+        return newSet;
+      });
+    }
+  };
+
+  const toggleSource = (source) => {
+    setSelectedSources(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(source)) {
+        newSet.delete(source);
+      } else {
+        newSet.add(source);
+      }
+      return newSet;
+    });
+  };
+
+  const filterEvents = () => {
+    let filtered = events.filter(event =>
+      selectedSources.has(event.source) &&
+     (searchTerm === '' ||
+        event.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase())))
+    );
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (dateFilter) {
+      case 'past':
+        filtered = filtered.filter(event => event.start < today);
+        break;
+      case 'upcoming':
+        filtered = filtered.filter(event => event.start >= today);
+        break;
+      case 'custom':
+        if (customStartDate) {
+          const startDate = new Date(customStartDate);
+          filtered = filtered.filter(event => event.start >= startDate);
+        }
+        if (customEndDate) {
+          const endDate = new Date(customEndDate);
+          endDate.setHours(23, 59, 59);
+          filtered = filtered.filter(event => event.start <= endDate);
+        }
+        break;
+      default:
+        break;
+    }
+
+    return filtered.sort((a, b) => a.start - b.start);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleDateString('en-AU', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (date) => {
+    if (!date) return '';
+    return date.toLocaleTimeString('en-AU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const getMonthGrid = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+    const endDate = new Date(lastDay);
+    endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+    const days = [];
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return days;
+  };
+
+  const getWeekGrid = () => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(day.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const navigateMonth = (direction) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + direction);
+    setCurrentDate(newDate);
+  };
+
+  const navigateWeek = (direction) => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + (direction * 7));
+    setCurrentDate(newDate);
+  };
+
+  // Auto-switch date filter based on view
+  const handleViewChange = (newView) => {
+    setView(newView);
+    if (newView === 'list') {
+      setDateFilter('upcoming');
+    } else {
+      setDateFilter('all');
+    }
+  };
+
+  const filteredEvents = filterEvents();
+
+  const eventsByDate = useMemo(() => {
+    const grouped = {};
+    filteredEvents.forEach(event => {
+      const dateKey = getLocalDateKey(event.start);
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(event);
+    });
+    return grouped;
+  }, [filteredEvents]);
+
+  // Group events by month and week for list view
+  const groupedListEvents = useMemo(() => {
+    const groups = [];
+    let currentMonth = null;
+    let currentWeek = null;
+
+    filteredEvents.forEach(event => {
+      const eventDate = event.start;
+      const monthKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}`;
+      const weekStart = new Date(eventDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+
+      // Check if we need a new month group
+      if (monthKey !== currentMonth) {
+        currentMonth = monthKey;
+        groups.push({
+          type: 'month',
+          label: eventDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' }),
+          date: eventDate
+        });
+      }
+
+      // Check if we need a new week group
+      if (weekKey !== currentWeek) {
+        currentWeek = weekKey;
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        groups.push({
+          type: 'week',
+          label: `Week of ${weekStart.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}`,
+          date: weekStart
+        });
+      }
+
+      // Add the event
+      groups.push({
+        type: 'event',
+        data: event
+      });
+    });
+
+    return groups;
+  }, [filteredEvents]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold text-gray-800">Event Viewer</h1>
+            <div className="flex gap-2">
+              <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+                <Upload size={20} />
+                Upload ICS
+                <input
+                  type="file"
+                  accept=".ics"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={handleAddICSURL}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <Plus size={20} />
+                Add ICS URL
+              </button>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleViewChange('list')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  view === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                <List size={20} />
+                List
+              </button>
+              <button
+                onClick={() => handleViewChange('week')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  view === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                <Calendar size={20} />
+                Week
+              </button>
+              <button
+                onClick={() => handleViewChange('calendar')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  view === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                <Calendar size={20} />
+                Month
+              </button>
+            </div>
+
+            <div className="flex-1 flex items-center gap-2">
+              <Search size={20} className="text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              <Filter size={20} />
+              Filters
+            </button>
+          </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Sources</h3>
+                <div className="flex flex-wrap gap-2">
+                  {sources.map(source => {
+                    const colors = getSourceColor(source);
+                    return (
+                      <button
+                        key={source}
+                        onClick={() => toggleSource(source)}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          selectedSources.has(source)
+                            ? `${colors.bg} ${colors.text}`
+                            : 'bg-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {source}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Date Range</h3>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  <button
+                    onClick={() => setDateFilter('all')}
+                    className={`px-3 py-1 rounded ${
+                      dateFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setDateFilter('past')}
+                    className={`px-3 py-1 rounded ${
+                      dateFilter === 'past' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    Past
+                  </button>
+                  <button
+                    onClick={() => setDateFilter('upcoming')}
+                    className={`px-3 py-1 rounded ${
+                      dateFilter === 'upcoming' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    Upcoming
+                  </button>
+                  <button
+                    onClick={() => setDateFilter('custom')}
+                    className={`px-3 py-1 rounded ${
+                      dateFilter === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+
+                {dateFilter === 'custom' && (
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded"
+                      placeholder="Start date"
+                    />
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded"
+                      placeholder="End date"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Events Display */}
+          {events.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">No events loaded. Upload or add an ICS URL to get started.</p>
+            </div>
+          ) : view === 'list' ? (
+            <div className="space-y-2">
+              {groupedListEvents.map((item, idx) => {
+                if (item.type === 'month') {
+                  return (
+                    <div key={`month-${idx}`} className="mt-6 mb-3">
+                      <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">
+                        {item.label}
+                      </h2>
+                    </div>
+                  );
+                } else if (item.type === 'week') {
+                  return (
+                    <div key={`week-${idx}`} className="mt-4 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-700 ml-2">
+                        {item.label}
+                      </h3>
+                    </div>
+                  );
+                } else {
+                  const event = item.data;
+                  const colors = getSourceColor(event.source);
+                  return (
+                    <div
+                      key={`event-${idx}`}
+                      onClick={() => setSelectedEvent(event)}
+                      className={`p-4 border-l-4 ${colors.border} ${colors.bg} rounded-lg ${colors.hover} cursor-pointer transition-colors`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-gray-800">{event.summary}</h3>
+                          <div className="mt-2 space-y-1 text-sm text-gray-600">
+                            <div>📅 {formatDate(event.start)}</div>
+                            <div>🕐 {formatTime(event.start)}
+                              {event.end && ` - ${formatTime(event.end)}`}
+                            </div>
+                            {event.location && <div>📍 {event.location}</div>}
+                          </div>
+                        </div>
+                        <span className={`ml-4 px-3 py-1 ${colors.bg} ${colors.text} rounded-full text-sm whitespace-nowrap`}>
+                          {event.source}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          ) : (
+            <div>
+              {view === 'week' ? (
+                // Weekly Calendar View
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => navigateWeek(-1)}
+                      className="p-2 hover:bg-gray-100 rounded"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <h2 className="text-xl font-bold">
+                      Week of {getWeekGrid()[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </h2>
+                    <button
+                      onClick={() => navigateWeek(1)}
+                      className="p-2 hover:bg-gray-100 rounded"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-3">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <div key={day} className="text-center font-semibold text-gray-700 py-2">
+                        {day}
+                      </div>
+                    ))}
+
+                    {getWeekGrid().map((day, idx) => {
+                      const dateKey = getLocalDateKey(day); // day.toISOString().split('T')[0];
+                      const dayEvents = eventsByDate[dateKey] || [];
+                      const isToday = day.toDateString() === new Date().toDateString();
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`min-h-[180px] p-3 border rounded-lg ${
+                            isToday ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className={`text-base font-bold mb-3 ${
+                            isToday ? 'text-blue-600' : 'text-gray-700'
+                          }`}>
+                            {day.getDate()}
+                          </div>
+                          <div className="space-y-2">
+                            {dayEvents.map((event, eventIdx) => {
+                              const colors = getSourceColor(event.source);
+                              return (
+                                <div
+                                  key={eventIdx}
+                                  onClick={() => setSelectedEvent(event)}
+                                  className={`text-sm p-2 ${colors.bg} rounded ${colors.hover} cursor-pointer border ${colors.border}`}
+                                >
+                                  <div className="font-bold text-gray-800 mb-1">{formatTime(event.start)}</div>
+                                  <div className="font-semibold text-gray-700 mb-1">{event.summary}</div>
+                                  {event.location && (
+                                    <div className="text-xs text-gray-600 truncate">📍 {event.location}</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                // Monthly Calendar View
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => navigateMonth(-1)}
+                      className="p-2 hover:bg-gray-100 rounded"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <h2 className="text-xl font-bold">
+                      {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h2>
+                    <button
+                      onClick={() => navigateMonth(1)}
+                      className="p-2 hover:bg-gray-100 rounded"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <div key={day} className="text-center font-semibold text-gray-700 py-2">
+                        {day}
+                      </div>
+                    ))}
+
+                    {getMonthGrid().map((day, idx) => {
+                      const dateKey = getLocalDateKey(day); // day.toISOString().split('T')[0];
+                      const dayEvents = eventsByDate[dateKey] || [];
+                      const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                      const isToday = day.toDateString() === new Date().toDateString();
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`min-h-[100px] p-2 border rounded-lg ${
+                            !isCurrentMonth ? 'bg-gray-50 text-gray-400' :
+                            isToday ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className={`text-sm font-semibold mb-1 ${
+                            isToday ? 'text-blue-600' : ''
+                          }`}>
+                            {day.getDate()}
+                          </div>
+                          <div className="space-y-1">
+                            {dayEvents.slice(0, 3).map((event, eventIdx) => {
+                              const colors = getSourceColor(event.source);
+                              return (
+                                <div
+                                  key={eventIdx}
+                                  onClick={() => setSelectedEvent(event)}
+                                  className={`text-xs p-1 ${colors.bg} rounded truncate ${colors.hover} cursor-pointer`}
+                                  title={event.summary}
+                                >
+                                  {event.summary}
+                                </div>
+                              );
+                            })}
+                            {dayEvents.length > 3 && (
+                              <div className="text-xs text-gray-500 pl-1">
+                                +{dayEvents.length - 3} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Event Detail Modal */}
+          {selectedEvent && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              onClick={() => setSelectedEvent(null)}
+            >
+              <div
+                className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className={`p-6 border-l-8 ${getSourceColor(selectedEvent.source).border} overflow-y-auto`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex-1 pr-4">{selectedEvent.summary}</h2>
+                    <button
+                      onClick={() => setSelectedEvent(null)}
+                      className="text-gray-500 hover:text-gray-700 text-3xl leading-none flex-shrink-0"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-600 mb-1">Source</h3>
+                      <span className={`inline-block px-3 py-1 ${getSourceColor(selectedEvent.source).bg} ${getSourceColor(selectedEvent.source).text} rounded-full text-sm`}>
+                        {selectedEvent.source}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-600 mb-1">Date & Time</h3>
+                      <div className="text-gray-800">
+                        <div>📅 {formatDate(selectedEvent.start)}</div>
+                        <div>🕐 {formatTime(selectedEvent.start)}
+                          {selectedEvent.end && ` - ${formatTime(selectedEvent.end)}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedEvent.location && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-600 mb-1">Location</h3>
+                        <div className="text-gray-800">📍 {selectedEvent.location}</div>
+                      </div>
+                    )}
+
+                    {selectedEvent.description && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-600 mb-1">Description</h3>
+                        <div className="text-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto p-3 bg-gray-50 rounded border border-gray-200">
+                          {selectedEvent.description}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+        // 1. Get the container element
+    const container = document.getElementById('root');
+
+    // 2. Create a root
+    const root = ReactDOM.createRoot(container);
+
+    // 3. Render your app into the root
+    root.render(<EventViewer />);
+
+ </script>
+</body>
+</html>
